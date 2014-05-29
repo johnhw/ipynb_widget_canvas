@@ -50,24 +50,24 @@ link to my notebook gist with nbviewer
 
 ## Reference Information
 
-This section is a list of the various web sites I found most helpful while learning new concepts
+This is a list of the various web sites I found most helpful while learning new concepts
 and solving my implementation problems.
 
 - Comprehensive Canvas reference at [whatwg.org](http://whatwg.org) specifically for
-  developers: [The Canvas Element](http://developers.whatwg.org/the-canvas-element.html)
+  developers: [The Canvas Element](http://developers.whatwg.org/the-canvas-element.html).
 
 - JavaScript [Design Patterns](http://addyosmani.com/resources/essentialjsdesignpatterns/book/)
   book by Addy Osmani.
 
 - Fundamental BackboneJS information:
-  [View](http://backbonejs.org/#View), [Model](http://backbonejs.org/#Model),
+  [View](http://backbonejs.org/#View), [Model](http://backbonejs.org/#Model), and
   [Events](http://backbonejs.org/#Events)
 
 - Life-saving nuggets of BackboneJS information:
   [rendering/appending views](http://stackoverflow.com/questions/9271507/how-to-render-and-append-sub-views-in-backbone-js),
   [built-in events](http://backbonejs.org/#Events-catalog),
   [mouse click events](http://danielarandaochoa.com/backboneexamples/blog/2012/02/28/handling-the-click-event-with-backbone/),
-  [examples](http://backbonejs.org/#examples).
+  [many examples](http://backbonejs.org/#examples).
 
 
 ## Lessons Learned
