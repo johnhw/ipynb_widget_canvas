@@ -64,38 +64,62 @@ developers: [The Canvas Element](http://developers.whatwg.org/the-canvas-element
 
 ## Lessons Learned
 
-- The method `this.update()` method in my derived JavaScript widget class is called automatically
-  for all IPython Traitlet 'change' events.  This was configured via the parent class
-  `DOMWidgetView` from the method `initialize()` with code similar to the following:
+- In my application I don't have a clean correspondence between a Python back-end variable and a
+  simple HTML5/JavaScript front-end widget.  Instead I have an image and related cropping/scaling
+  and offset parameters. I don't want to perform extra work and update all widget parameters when a
+  single model parameter is changed. Some update are low overhead, e.g. redraw the image, while
+  others require a lot of work, e.g. receive new PNG-compressed image data and copy it into the
+  internal `Image` element.
+
+  The best solution I've found to date is to forgo performing any work in my Backbone View's
+  `this.update()` method, and instead use separate event handlers for each major part of my model.
+  These may be defined in `this.initialize()` or in `this.render()`, but to me it seems more
+  elegant to define them up in `this.initialize()`.  It might look like this:
+
+  ```javascript
+  this.model.on('change:_src', this.update_src, this);
+  this.model.on('change:_width', this.update_width, this);
+  this.model.on('change:_height', this.update_height, this);
+  ```
+
+- The method `this.update()` method in my extended JavaScript widget class is called automatically
+  for all 'change' events triggered by IPython's Traitlet synchronization process.  This is
+  implemented by the parent class `DOMWidgetView` via the method `initialize()` with a statement
+  similar to the following:
 
   ```javascript
   this.model.on('change', this.update, this);
   ```
 
-  In my application I don't have a simple correspondence between a Python variable and an
-  HTML/JavaScript widget parameter.  Instead I have an image, related cropping/offset paramters,
-  and overall width & height.  I don't wish to update all widget parameters when a new model
-  parameter is updated.  Some update are low overhead, e.g. redraw the image, while others require
-  a lot of work, e.g. receive new PNG-compressed image data and copy it into the internal `Image`
-  element.
+- In JavaScript I found that I need to call `this.update()` at the end of `this.render()`, even if
+  my own `this.update()` doesn't do anything (or maybe doesn't even exist!).  I noticed odd
+  problems when `this.update()` was left out, e.g. a second view of my model would not reflect
+  any prior CSS style properties applied to earlier view instances.
 
-  The best solution I've found to date is to forgo performing any work in my class' `this.update()` method, and instead use separate event handlers for each major part of my model.  These may be defined in `this.initialize()` or in `this.render()`, but to me it seems more elegant to define them up in `this.initialize()`.  It might look like this
-```javascript
-    this.model.on('change:_src', this.update_src, this);
-```
-for establishing the event handler associated with the `_src` traitlet defined in the Python back end.
+- Here is how to check if a given variable exists within the application's Backbone Model: http://backbonejs.org/#Model-has
 
-- **JS**: Need to call `this.update()` at the end of `this.render()`, even if my own `this.update()` doesn't do anything or maybe doesnt even exist.  I noticed odd problems if this update() function was left out, e.g. a second view of my model would not reflect any prior CSS style properties applied when only initial view existed.
+  ```javascript
+  if (this.model.has('_src')) {
+      this.update_src();
+  }
+  ```
 
-- **JS**: Check whether or not a given variable exists within Backbone model: http://backbonejs.org/#Model-has
-```javascript
-    if (this.model.has('_src')) {
-        this.update_src();
-    }
-```
-  I found this quite useful to decide if I needed to call (or not call) any expensive functions as part of `this.render()` or `this.update()`.  In particular, I needed this in order to properly display a secondary view of my widget after having already displayed the first view.  The problem I had was that my image wold not display upon rendering the second view without this check in place.
+  I found this quite useful to decide if I needed to call (or not call) any expensive functions as
+  part of `this.render()` or `this.update()`.  In particular, I needed this in order to properly
+  display a secondary view of my widget after having already displayed the first view.  The Model
+  was fully configured at this point and ready for rendering.  With the initial view, I instead
+  rely on a data-changed event handler to call the `draw()` method.
 
-- **JS**: Be sure to understand the meaning of Canvas element's inherent width & height versus the same element's CSS width & height.  The discussion on [StackOverflow](http://stackoverflow.com/questions/4938346/canvas-width-and-height-in-html5) proved to be very helpful.  In addition, I found I could not rely on the style width and height to always default to the canvas' width and height properties after several changes.  I'm not sure why.  Something to do with the IPython Notebook environment??
+
+- The Canvas Element height and width properties were initially quite confusing for me.  That's
+  because its a two-part problem: the canvas has an inherent width and height measured in data
+  pixels, the canvas displayed to the screen is controlled by the element's CSS width and height.
+  The [canvas-width-and-height-in- html5](http://stackoverflow.com/questions/4938346/canvas-width-
+  and-height-in-html5) discussion on StackOverflow was extremely helpful.
+
+    In addition, I found I could not rely on the style width and height to always default to the
+  canvas' width and height properties after several changes.  I'm not sure why.  Something to do
+  with the IPython Notebook environment??
 
 - JavaScript mouse events are interesting:
 
