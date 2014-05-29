@@ -68,15 +68,16 @@ developers: [The Canvas Element](http://developers.whatwg.org/the-canvas-element
   for all IPython Traitlet 'change' events.  This was configured via the parent class
   `DOMWidgetView` from the method `initialize()` with code similar to the following:
 
-    ```javascript
-      this.model.on('change', this.update, this);
-    ```
+  ```javascript
+  this.model.on('change', this.update, this);
+  ```
 
-In my application I don't have a simple correspondence between a Python variable and an
-HTML/JavaScript widget parameter.  Instead I have an image, related cropping/offset paramters, and
-overall width & height.  I don't wish to update all widget parameters when a new model parameter is
-updated.  Some update are low overhead, e.g. redraw the image, while others require a lot of work,
-e.g. receive new PNG-compressed image data and copy it into the internal `Image` element.
+  In my application I don't have a simple correspondence between a Python variable and an
+  HTML/JavaScript widget parameter.  Instead I have an image, related cropping/offset paramters,
+  and overall width & height.  I don't wish to update all widget parameters when a new model
+  parameter is updated.  Some update are low overhead, e.g. redraw the image, while others require
+  a lot of work, e.g. receive new PNG-compressed image data and copy it into the internal `Image`
+  element.
 
   The best solution I've found to date is to forgo performing any work in my class' `this.update()` method, and instead use separate event handlers for each major part of my model.  These may be defined in `this.initialize()` or in `this.render()`, but to me it seems more elegant to define them up in `this.initialize()`.  It might look like this
 ```javascript
