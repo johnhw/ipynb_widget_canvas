@@ -36,16 +36,16 @@ sense to me.
   tool.  But that stuff could be done on top of a basic, general-purpose canvas widget.  Keep the
   widget simple and focus on managing function calls in JavaScript and event handling on either
   end.
-- An image is stored and transfered between front- and backend as Base64-encoded png-compressed
+- An image is stored and transfered between front- and back-end as Base64-encoded PNG-compressed
   image src string.  From the user's point of view this is not so practical.  The user-facing
   Python interface will be nicer if it involves a Numpy array.  Internally I can process and
-  convert to png compressed src string.  The src property is a traitlet and is thus synced
-  automatically.  I can expose the Python image variable as a property.
+  convert to PNG-compressed src string.  The src property is a Traitlet and is thus synced
+  automatically.  I expose the Python image variable to the user as a property.
 
 
 ## Example Usage
 
-link to a notebook on nbviewer
+link to my notebook gist with nbviewer
 
 
 ## Reference Information
@@ -53,13 +53,21 @@ link to a notebook on nbviewer
 This section is a list of the various web sites I found most helpful while learning new concepts
 and solving my implementation problems.
 
-- Comprehensive canvas reference at [whatwg.org](http://whatwg.org) specifically for
-developers: [The Canvas Element](http://developers.whatwg.org/the-canvas-element.html)
--
-- Be sure to understand the meaning of Canvas element's inherent width & height versus the same element's CSS width & height.  The discussion on [StackOverflow](http://stackoverflow.com/questions/4938346/canvas-width-and-height-in-html5)
+- Comprehensive Canvas reference at [whatwg.org](http://whatwg.org) specifically for
+  developers: [The Canvas Element](http://developers.whatwg.org/the-canvas-element.html)
 
-- JavaScript canvas mouse coordinate [awesome example](http://www.html5canvastutorials.com/advanced/html5-canvas-mouse-coordinates/)
-- JavaScript canvas mouse click and motion handling: [example code](http://stackoverflow.com/questions/10001283/html5-canvas-how-to-handle-mousedown-mouseup-mouseclick#)
+- JavaScript [Design Patterns](http://addyosmani.com/resources/essentialjsdesignpatterns/book/)
+  book by Addy Osmani.
+
+- Fundamental BackboneJS information:
+  [View](http://backbonejs.org/#View), [Model](http://backbonejs.org/#Model),
+  [Events](http://backbonejs.org/#Events)
+
+- Life-saving nuggets of BackboneJS information:
+  [rendering/appending views](http://stackoverflow.com/questions/9271507/how-to-render-and-append-sub-views-in-backbone-js),
+  [built-in events](http://backbonejs.org/#Events-catalog),
+  [mouse click events](http://danielarandaochoa.com/backboneexamples/blog/2012/02/28/handling-the-click-event-with-backbone/),
+  [examples](http://backbonejs.org/#examples).
 
 
 ## Lessons Learned
@@ -126,7 +134,7 @@ developers: [The Canvas Element](http://developers.whatwg.org/the-canvas-element
 
 - JavaScript mouse events are interesting:
 
-  Mouse Event | Event Description
+  Event       | Description
   ---         | ---
   mousedown   | mouse button is pressed on an element.
   mouseup     | mouse button is released over an element.
@@ -136,58 +144,24 @@ developers: [The Canvas Element](http://developers.whatwg.org/the-canvas-element
   mouseover   | mouse is moved onto the element that has the listener attached or onto one of its children.
   mouseout    | mouse is moved off the element that has the listener attached or off one of its children.
 
+- Understanding Canvas element mouse
+  [coordinates](http://www.html5canvastutorials.com/advanced/html5-canvas-mouse-coordinates/)
+  and
+  [events](http://stackoverflow.com/questions/10001283/html5-canvas-how-to-handle-mousedown-mouseup-mouseclick#)
+  in the context of BackbonJS
+  [event handling](http://danielarandaochoa.com/backboneexamples/blog/2012/02/28/handling-the-click-event-with-backbone/)
+
 - The built-in IPython `DOMWidget` has methods for handling CSS styles.  Use those methods instead
   of building my own handlers for particular style properties, e.g. border thickness and color.
 
-- **Traitlet Events**:  The discussion about [Specialized Events](http://nbviewer.ipython.org/github/ipython/ipython/blob/2.x/examples/Interactive%20Widgets/Widget%20Events.ipynb#Specialized-Events) gives a lot of insight into the relationship between frontend-widgets and backend data structures.  IPython's builtin widgets generally connect a simple data type (an integer or float, a list of values, etc.) to a simple widget (slider, checkbox, dropdown list).  This explains why most builtin widgets focus on synchronizing the `value` traitlet between the front and the back.  The `Button` widget is one builtin example of a slightly more complicated example.  It doesn't manage any data, instead it generates `click` events, and the framework is adapted to work with this widget's specific events.  I think the current version of ButtonWidget is more complicated than necessary.  Should not have to send custom messsages, instead rely on traitlets for synchronization.  Could also update the button to support PNG data for graphics.
-
-  See also this notebook abot [Trait Events](http://nbviewer.ipython.org/github/ipython/ipython/blob/2.x/examples/Interactive%20Widgets/Widget%20Events.ipynb#Traitlet-Events).
-
-
-
-
-
-
-
-
-
-- IPython Notebook [Specialized Events](http://nbviewer.ipython.org/github/ipython/ipython/blob/2.x/examples/Interactive%20Widgets/Widget%20Events.ipynb#Specialized-Events) gives a lot of insight into the relationship between frontend-widgets and backend data structures.
-
-
-IPython's builtin widgets generally connect a simple data type (an integer or float, a list of
-values, etc.) to a simple widget (slider, checkbox, dropdown list).  This explains why most builtin
-widgets focus on synchronizing the `value` traitlet between the front and the back.  The `Button`
-widget is one builtin example of a slightly more complicated example.  It doesn't manage any data,
-instead it generates `click` events, and the framework is adapted to work with this widget's
-specific events.  I think the current version of ButtonWidget is more complicated than necessary.
-Should not have to send custom messsages, instead rely on traitlets for synchronization.  Could
-also update the button to support PNG data for graphics.
-
-  See also this notebook about [Trait Events](http://nbviewer.ipython.org/github/ipython/ipython/blob/2.x/examples/Interactive%20Widgets/Widget%20Events.ipynb#Traitlet-Events).
-
-
-## JavaScript Frontend Actions
-
-- Initialize HTML element(s)
-- Connect Canvas events to Backbone events
-    + Mouse click
-    + Mouse move
-    + Mouse wheel scroll
-- Receive & display new image data
-- Receive & apply image transform data
-
-## Python Backend Actions
-
-- Receive Canvas/Backbone events
-- Generate & send new transform data
-- Accept new image data from user
-- Compress new image data & send to the Frontend
-
-
-## Python Demo App
-
-- Combine my CanvasImageWidget with built-in IPython button and slider widgets.
-- Zoom and rotate an image.
-- Animate through a sequence of images.
-
-
+- The notebook about IPython's
+  [Traitlet Events](http://nbviewer.ipython.org/github/ipython/ipython/blob/2.x/examples/Interactive%20Widgets/Widget%20Events.ipynb#Traitlet-Events)
+  gives a lot of insight into the relationship between front-end widgets and back-end data
+  structures.  IPython's built-in widgets generally connect a simple data type (an integer or
+  float, a list of values, etc.) to a simple widget (slider, checkbox, dropdown list).  This
+  explains why most built-in widgets focus on synchronizing a `value` property between Python and
+  JavaScript.  The `ButtonWidget` is one built-in is a slightly more complicated example. It
+  doesn't manage any data, instead it generates `click` events, and it's framework is adapted to
+  manage custom events.  I think the current version of `ButtonWidget` is more complicated than
+  necessary.  Should not have to send custom messages, but instead rely on synchronized Traitlets.
+  See this project's mouse event handling for an alternative and simpler example.
