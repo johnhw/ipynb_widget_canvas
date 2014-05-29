@@ -96,7 +96,7 @@ developers: [The Canvas Element](http://developers.whatwg.org/the-canvas-element
   problems when `this.update()` was left out, e.g. a second view of my model would not reflect
   any prior CSS style properties applied to earlier view instances.
 
-- Here is how to check if a given variable exists within the application's Backbone Model: http://backbonejs.org/#Model-has
+- Here is how to check if a given variable exists within the application's Backbone Model:
 
   ```javascript
   if (this.model.has('_src')) {
@@ -104,34 +104,37 @@ developers: [The Canvas Element](http://developers.whatwg.org/the-canvas-element
   }
   ```
 
-  I found this quite useful to decide if I needed to call (or not call) any expensive functions as
-  part of `this.render()` or `this.update()`.  In particular, I needed this in order to properly
-  display a secondary view of my widget after having already displayed the first view.  The Model
-  was fully configured at this point and ready for rendering.  With the initial view, I instead
-  rely on a data-changed event handler to call the `draw()` method.
-
+  I got this from the source: [backbonejs.org/#Model-has](http://backbonejs.org/#Model-has).  This
+  was quite useful to decide if I needed to call (or not call) any expensive functions as part of
+  `this.render()` or `this.update()`.  In particular, I needed this in order to properly display a
+  secondary view of my widget after having already displayed the first view.  The Model was fully
+  configured at this point and ready for rendering.  With the initial view, I instead rely on a
+  data-changed event handler to call the `draw()` method.
 
 - The Canvas Element height and width properties were initially quite confusing for me.  That's
-  because its a two-part problem: the canvas has an inherent width and height measured in data
-  pixels, the canvas displayed to the screen is controlled by the element's CSS width and height.
-  The [canvas-width-and-height-in- html5](http://stackoverflow.com/questions/4938346/canvas-width-
-  and-height-in-html5) discussion on StackOverflow was extremely helpful.
+  because its a two-part problem! 1) the Canvas has an inherent width and height measured in data
+  pixels; 2) the Canvas as displayed to the screen is controlled by the element's CSS width and
+  height. The StackOverflow discussion
+  [canvas-width-and-height-in-html5](http://stackoverflow.com/questions/4938346/canvas-width-and-height-in-html5)
+  was extremely helpful.
 
-    In addition, I found I could not rely on the style width and height to always default to the
-  canvas' width and height properties after several changes.  I'm not sure why.  Something to do
-  with the IPython Notebook environment??
+- More on Canvas width and height: I found I could not rely on the style width and height to always
+  default to the Canvas' inherent width and height properties after several changes.  I'm not sure
+  why. Maybe I did something wrong?  Maybe something to do with the IPython Notebook environment?
+  My solution was to explicitly set the Canvas style width and height whenever I needed to modify
+  the Canvas' inherent width and height.
 
 - JavaScript mouse events are interesting:
 
-Mouse Event | Event Description
----         | ---
-mousedown   | mouse button is pressed on an element.
-mouseup     | mouse button is released over an element.
-mousemove   | mouse is moved over an element.
-mouseenter  | mouse is moved onto the element that has the listener attached.
-mouseleave  | mouse is moved off the element that has the listener attached.
-mouseover   | mouse is moved onto the element that has the listener attached or onto one of its children.
-mouseout    | mouse is moved off the element that has the listener attached or off one of its children.
+  Mouse Event | Event Description
+  ---         | ---
+  mousedown   | mouse button is pressed on an element.
+  mouseup     | mouse button is released over an element.
+  mousemove   | mouse is moved over an element.
+  mouseenter  | mouse is moved onto the element that has the listener attached.
+  mouseleave  | mouse is moved off the element that has the listener attached.
+  mouseover   | mouse is moved onto the element that has the listener attached or onto one of its children.
+  mouseout    | mouse is moved off the element that has the listener attached or off one of its children.
 
 - The built-in IPython `DOMWidget` has methods for handling CSS styles.  Use those methods instead
   of building my own handlers for particular style properties, e.g. border thickness and color.
