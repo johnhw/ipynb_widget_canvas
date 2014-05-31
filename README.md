@@ -1,5 +1,5 @@
 
-# Canvas Widget for IPython Notebook
+# Canvas Widget for the IPython Notebook
 
 ## Motivation
 
@@ -26,26 +26,35 @@ sense to me.
 
 ## Design Thoughts
 
-- A basic canvas widget should simply expose basic canvas properties and methods from the
-  JavaScript side over to the Python side.
-- I have no immediate plans to implement any functionality other than what's needed for my image
-  display and manipulation goals.
-- I should also keep in mind that others might want to extend from my work to implement other kinds
-  of canvas drawing functions.
-- An important goal is support future objective for building a nice quantitative image viewing
-  tool.  But that stuff could be done on top of a basic, general-purpose canvas widget.  Keep the
-  widget simple and focus on managing function calls in JavaScript and event handling on either
-  end.
-- An image is stored and transfered between front- and back-end as Base64-encoded PNG-compressed
-  image src string.  From the user's point of view this is not so practical.  The user-facing
-  Python interface will be nicer if it involves a Numpy array.  Internally I can process and
-  convert to PNG-compressed src string.  The src property is a Traitlet and is thus synced
-  automatically.  I expose the Python image variable to the user as a property.
+- My immediate plans for the Canvas Widget are to implement just the functionality required by my
+  quantitative image viewer project.  This includes:
+  - Display an image via URL
+  - Display an image from a Numpy array: gray scale, RGB, or RGBA
+  - Support image zooming and panning via mouse
+  - Accept user-defined callback functions to be called as response to mouse motion/click events
+  - Support for user-defined signal- and image-processing functions on Python back-end
+
+- I want the basic framework to be generic such that adding support for other Canvas Element
+  features in the future will be easy and fun.  Such features might include drawing geometric
+  shapes, basic animation, and maybe even WebGL???  Contributions from other people would be
+  welcome!
+
+- Follow programming techniques (Python and JavaScript) observed in IPython's built-in Notebook
+  widgets.  I would like for this widget to be as easy (or as hard??) to use as the built-in
+  widgets.
+
+- Image data is to accessed as a Python class property in a form compatible with a Numpy array.
+
+- Image data synchronized between front- and back-end as Base64-encoded PNG-compressed data.
+
+- The IPython Traitlet managing data synchronization is to be a valid `src` string.  The fact that
+  data originated from a Numpy array on back-end will have impact on front-end.  I will try to make
+  it possible to supply an arbitrary URL instead of a Numpy array.
 
 
 ## Example Usage
 
-link to my notebook gist with nbviewer
+TODO: link to my example notebook gist with nbviewer
 
 
 ## Reference Information
@@ -64,10 +73,10 @@ and solving my implementation problems.
   [Events](http://backbonejs.org/#Events)
 
 - Life-saving nuggets of BackboneJS information:
-  [rendering/appending views](http://stackoverflow.com/questions/9271507/how-to-render-and-append-sub-views-in-backbone-js),
-  [built-in events](http://backbonejs.org/#Events-catalog),
-  [mouse click events](http://danielarandaochoa.com/backboneexamples/blog/2012/02/28/handling-the-click-event-with-backbone/),
-  [many examples](http://backbonejs.org/#examples).
+  - [rendering/appending views](http://stackoverflow.com/questions/9271507/how-to-render-and-append-sub-views-in-backbone-js),
+  - [built-in events](http://backbonejs.org/#Events-catalog),
+  - [mouse click events](http://danielarandaochoa.com/backboneexamples/blog/2012/02/28/handling-the-click-event-with-backbone/),
+  - [many examples](http://backbonejs.org/#examples).
 
 
 ## Lessons Learned
