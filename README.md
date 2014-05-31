@@ -1,5 +1,5 @@
 
-# Canvas Widget for the IPython Notebook
+# Canvas Widget for IPython Notebook
 
 ## Motivation
 
@@ -9,7 +9,7 @@ interest in the canvas element is to use it as the foundation for an interactive
 within the IPython [Notebook](http://ipython.org/notebook.html) widget
 [framework](http://nbviewer.ipython.org/github/ipython/ipython/blob/2.x/examples/Interactive%20Widgets/Index.ipynb).
 
-todo: thoughts about ipython notebook, widgets, combined data processing, documentation, interactive exploration
+TODO: thoughts about ipython notebook, widgets, combined data processing, documentation, interactive exploration
 
 I knew early on that I would need to learn a about JavaScript to make this project work. JavaScript
 is a really curious programming language, where the basic language itself is a wilderness of of
@@ -73,10 +73,10 @@ and solving my implementation problems.
   [Events](http://backbonejs.org/#Events)
 
 - Life-saving nuggets of BackboneJS information:
-  - [rendering/appending views](http://stackoverflow.com/questions/9271507/how-to-render-and-append-sub-views-in-backbone-js),
-  - [built-in events](http://backbonejs.org/#Events-catalog),
-  - [mouse click events](http://danielarandaochoa.com/backboneexamples/blog/2012/02/28/handling-the-click-event-with-backbone/),
-  - [many examples](http://backbonejs.org/#examples).
+  - StackOverflow discussion [rendering/appending views](http://stackoverflow.com/questions/9271507/how-to-render-and-append-sub-views-in-backbone-js)
+  - list of [built-in events](http://backbonejs.org/#Events-catalog)
+  - example handling [mouse click events](http://danielarandaochoa.com/backboneexamples/blog/2012/02/28/handling-the-click-event-with-backbone/)
+  - Many more [great examples](http://backbonejs.org/#examples)
 
 
 ## Lessons Learned
