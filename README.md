@@ -1,5 +1,5 @@
 
-# Canvas Widget for IPython Notebook
+# A Canvas Widget for IPython Notebook
 
 ## Motivation
 
