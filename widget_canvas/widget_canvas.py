@@ -1,9 +1,8 @@
 from __future__ import division, print_function, unicode_literals
 
-import IPython
 import IPython.html.widgets
 
-import utility
+# import utility
 
 
 class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
@@ -129,3 +128,31 @@ class CanvasImageWidget(CanvasWidget):
         # for syncing with front-end.
         self._src = utility.encode_image(data)
 
+
+#######
+# Helper functions.
+
+def encode_image(data_image):
+    """
+    Generate HTML src string from image data using Base64 encoding.
+        Input image data, if supplied, must be a Numpy array with a shape similar to one of
+        the following:
+        (rows, columns)    - Greyscale
+        (rows, columns, 1) - Greyscale
+        (rows, columns, 3) - RGB
+        (rows, columns, 4) - RGBA
+
+    If data type is not either np.uint8 or np.int16, then it will be converted by scaling
+    min(data) -> 0 and max(data) -> 255 and cast to np.uint8.
+    """
+
+    # Compress via PNG.
+    data_comp, fmt = png_compress(data_image)
+
+    # Encode via base64.
+    data_b64 = base64.b64encode(data_comp)
+
+    # Build src string.
+    src = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
+
+    return src
