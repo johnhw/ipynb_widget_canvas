@@ -1,8 +1,9 @@
 from __future__ import division, print_function, unicode_literals
 
-import IPython.html.widgets
+import base64
 
-# import utility
+import IPython.html.widgets
+import image
 
 
 class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
@@ -113,25 +114,36 @@ class CanvasImageWidget(CanvasWidget):
         return self._image
 
     @image.setter
-    def image(self, data):
-        if data is None:
+    def image(self, data_image):
+        # Store the image data for later use.
+        self._image = data_image
+
+        if data_image is None:
             return
 
-        # Store the image data for later use??
-        self._image = data
-
-        height, width = data.shape[:2]
+        # Image width and height..
+        height, width = data_image.shape[:2]
         self._height = height
         self._width = width
 
         # Compress and encode input image data.  Store in baseclass' _src traitlet
         # for syncing with front-end.
-        self._src = utility.encode_image(data)
+
+        # Compress via PNG.
+        data_comp, fmt = image.png_compress(data_image)
+
+        # Encode via base64.
+        data_b64 = base64.b64encode(data_comp)
+
+        # Build src string.
+        # Put compressed data string into Traitlet for synchronizing to front-end.
+        self._src = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
 
 
-#######
+
+#################################################
 # Helper functions.
-
+#
 def encode_image(data_image):
     """
     Generate HTML src string from image data using Base64 encoding.
@@ -146,13 +158,5 @@ def encode_image(data_image):
     min(data) -> 0 and max(data) -> 255 and cast to np.uint8.
     """
 
-    # Compress via PNG.
-    data_comp, fmt = png_compress(data_image)
-
-    # Encode via base64.
-    data_b64 = base64.b64encode(data_comp)
-
-    # Build src string.
-    src = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
 
     return src
