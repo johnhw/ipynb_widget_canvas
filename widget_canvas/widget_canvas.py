@@ -1,9 +1,46 @@
+
 from __future__ import division, print_function, unicode_literals
 
+import os
 import base64
-
 import IPython.html.widgets
 import image
+
+
+#################################################
+# Helper functions
+#
+_path_module = os.path.abspath(os.path.dirname(__file__))
+_path_js = os.path.join(_path_module, 'js')
+
+
+def _read_local_js(fname):
+    """
+    Read a JavaScript file from application's local JS folder.  Return a string.
+    """
+    b, e = os.path.splitext(os.path.basename(fname))
+    f = os.path.join(_path_js, b + '.js')
+
+    if not os.path.isfile(f):
+        raise IOError('File not found: {}'.format(f))
+
+    with open(f) as fo:
+        text = fo.read()
+
+    return text
+
+
+def _bootstrap_js():
+    """
+    Load application-specific JavaScript source code and inject into current Notebook session.
+    """
+    files = ['widget_canvas.js']
+
+    for f in files:
+        js = _read_local_js(f)
+        IPython.display.display_javascript(js, raw=True)
+
+#################################################
 
 
 class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
@@ -23,14 +60,17 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
     _mouse = IPython.utils.traitlets.Dict(sync=True)
 
     def __init__(self, src=None, **kwargs):
+        """
+        Instantiate a new CanvasWidget object.
+        """
         super(CanvasWidget, self).__init__(**kwargs)
 
         if src is None:
             src = ''
 
         # Setup internal Python handler for front-end mouse events synced through
-        # the self._mouse traitlet.
-        self.on_trait_change(self._handle_mouse, '_mouse')
+        # the self._mouse Traitlet.
+        self.on_trait_change(self._handle_mouse, str('_mouse'))
 
         # Setup dispatchers to manage external user-defined event handlers.
         self._mouse_move_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
@@ -102,10 +142,23 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
 
 class CanvasImageWidget(CanvasWidget):
     """
-    Display and manipulate images using HTML5 Canvas and with IPython Notebook
-    widget system.
+    Display and manipulate images using HTML5 Canvas with IPython Notebook widget system.
+    This class builds upon CanvasWidget making it easier to work with images.
+
+    Input image data, if supplied, must be a Numpy array (or equivalent) with a shape similar to
+    one of the following:
+        (rows, columns)    - Greyscale
+        (rows, columns, 1) - Greyscale
+        (rows, columns, 3) - RGB
+        (rows, columns, 4) - RGBA
+
+    If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
+    min(data) -> 0 and max(data) -> 255.
     """
     def __init__(self, data=None, **kwargs):
+        """
+        Instantiate a new CanvasImageWidget object.
+        """
         super(CanvasImageWidget, self).__init__(**kwargs)
         self.image = data
 
@@ -121,42 +174,22 @@ class CanvasImageWidget(CanvasWidget):
         if data_image is None:
             return
 
-        # Image width and height..
-        height, width = data_image.shape[:2]
-        self._height = height
-        self._width = width
+        # Image width and height.
+        self._height = data_image.shape[0]
+        self._width = data_image.shape[1]
 
-        # Compress and encode input image data.  Store in baseclass' _src traitlet
-        # for syncing with front-end.
-
-        # Compress via PNG.
+        # Compress and encode input image data.  Store the result in baseclass' _src traitlet for
+        # syncing with front-end.
         data_comp, fmt = image.png_compress(data_image)
 
         # Encode via base64.
         data_b64 = base64.b64encode(data_comp)
 
-        # Build src string.
-        # Put compressed data string into Traitlet for synchronizing to front-end.
+        # Build src string and put it into Traitlet for synchronizing with front-end.
         self._src = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
 
 
-
 #################################################
-# Helper functions.
+# Bootstrap applications's JavaScript code into current Notebook Session.
 #
-def encode_image(data_image):
-    """
-    Generate HTML src string from image data using Base64 encoding.
-        Input image data, if supplied, must be a Numpy array with a shape similar to one of
-        the following:
-        (rows, columns)    - Greyscale
-        (rows, columns, 1) - Greyscale
-        (rows, columns, 3) - RGB
-        (rows, columns, 4) - RGBA
-
-    If data type is not either np.uint8 or np.int16, then it will be converted by scaling
-    min(data) -> 0 and max(data) -> 255 and cast to np.uint8.
-    """
-
-
-    return src
+_bootstrap_js()

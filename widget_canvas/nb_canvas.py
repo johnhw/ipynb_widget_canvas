@@ -119,7 +119,7 @@ class ImageViewer(object):
         script = script.replace('"', "'")
 
         return script
-s
+
     def generate_html(self):
         """
         Construct HTML document parts.
