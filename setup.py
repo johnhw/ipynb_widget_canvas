@@ -2,9 +2,9 @@
 from setuptools import setup, find_packages
 
 # Do it.
-version = '1.0.0'
+version = '0.0.1'
 
-setup(name='ipynb_canvas_widget',
+setup(name='ipynb_widget_canvas',
       packages=find_packages(),
       package_data={'': ['*.txt', '*.md', '*.py', '*.ipynb',  '*.']},
 
@@ -13,5 +13,5 @@ setup(name='ipynb_canvas_widget',
       license='MIT',
       author='Pierre V. Villeneuve',
       author_email='pierre.villeneuve@gmail.com',
-      description='Canvas Widget for the IPython Notebook',
+      description='A Canvas Widget for the IPython Notebook',
       url='https://github.com/Who8MyLunch/ipynb_canvas_widget')
