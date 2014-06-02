@@ -50,7 +50,7 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
     _view_name = IPython.utils.traitlets.Unicode('CanvasView', sync=True)
 
     # Image data source.
-    _src = IPython.utils.traitlets.Unicode(sync=True)
+    src = IPython.utils.traitlets.Unicode(sync=True)
 
     # Canvas dimensions.
     _width = IPython.utils.traitlets.CFloat(sync=True)
@@ -59,7 +59,7 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
     # Mouse event information.
     _mouse = IPython.utils.traitlets.Dict(sync=True)
 
-    def __init__(self, src=None, **kwargs):
+    def __init__(self, src=None, width=None, height=None, **kwargs):
         """
         Instantiate a new CanvasWidget object.
         """
@@ -80,7 +80,12 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         self._flag_mouse_down = False
 
         # Store supplied src data in traitlet.
-        self._src = src
+        self.src = src
+        if height:
+            self._height = height
+
+        if width:
+            self._width = width
 
     #####################################################
     # Traitlet data sync event handlers.
@@ -178,7 +183,7 @@ class CanvasImageWidget(CanvasWidget):
         self._height = data_image.shape[0]
         self._width = data_image.shape[1]
 
-        # Compress and encode input image data.  Store the result in baseclass' _src traitlet for
+        # Compress and encode input image data.  Store the result in baseclass' src traitlet for
         # syncing with front-end.
         data_comp, fmt = image.png_compress(data_image)
 
@@ -186,7 +191,7 @@ class CanvasImageWidget(CanvasWidget):
         data_b64 = base64.b64encode(data_comp)
 
         # Build src string and put it into Traitlet for synchronizing with front-end.
-        self._src = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
+        self.src = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
 
 
 #################################################

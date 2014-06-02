@@ -4,18 +4,17 @@
 
 require(["widgets/js/widget"], function (WidgetManager) {
 
-    console.log('require widget_canvas.js');
+    // console.log('require widget_canvas.js');
 
     // Define the widget's View.
     var CanvasView = IPython.DOMWidgetView.extend({
         initialize: function (options) {
-            console.log('initialize');
+            // console.log('initialize');
 
             // Backbone model --> JavaScript
-            this.model.on('change:_src', this.update_src, this);
-            this.model.on('change:_height', this.update_height, this);
-            this.model.on('change:_width', this.update_width, this);
-
+            this.model.on('change:src', this.update_src, this);
+            // this.model.on('change:_height', this.update_height, this);
+            // this.model.on('change:_width', this.update_width, this);
             CanvasView.__super__.initialize.apply(this, arguments);
         },
 
@@ -34,11 +33,22 @@ require(["widgets/js/widget"], function (WidgetManager) {
             // be used as source data argument to the canvas' own `drawImage()` method.
             this.image = new Image();
 
-            // Draw content to the canvas if image data currently exists in the model.
-            if (this.model.has('_src')) {
-                this.update_width(false);
-                this.update_height(false);
-                this.update_src();
+            // Event handle for loading new data into the image element.
+            var that = this
+            var draw_image_onload = function () {
+                that.draw(that.image);
+            }
+
+            this.image.onload = draw_image_onload
+
+            // Draw content to the canvas if valid image data exists in the Backbone model.
+            if (this.model.has('src')) {
+                if (this.model.get('src') != '') {
+                    this.update_src();
+                }
+                // this.update_width(false);
+                // this.update_height(false);
+                // this.draw_image();
             }
 
             // I noticed problems if this update() function call was left out, e.g. second views of
@@ -62,54 +72,73 @@ require(["widgets/js/widget"], function (WidgetManager) {
         //             return CanvasView.__super__.update.apply(this);
         //             },
 
-        update_width: function (call_draw) {
-            // Python --> JavaScript
-            console.log('update_width');
+        // update_width: function (call_draw) {
+        //     // Python --> JavaScript
+        //     // console.log('update_width');
 
-            // Default parameter value.
-            call_draw = typeof call_draw !== 'undefined' ? call_draw : true
+        //     // Default parameter value.
+        //     call_draw = typeof call_draw !== 'undefined' ? call_draw : true
 
-            this.canvas.width = this.model.get('_width');
-            this.canvas.style.width = this.model.get('_width') + 'px'
+        //     var value = this.model.get('_width');
+        //     if (value == 0) {
+        //         value = this.image.width
+        //     }
 
-            // Changing width or height automatically clears the display so we need to redraw it.
-            if (call_draw) this.draw_image();
-        },
+        //     this.canvas.width = value
+        //     this.canvas.style.width = value + 'px'
 
-        update_height: function (call_draw) {
-            // Python --> JavaScript
-            console.log('update_height');
+        //     // Changing width or height automatically clears the display so we need to redraw it.
+        //     if (call_draw) this.draw_image();
+        // },
 
-            call_draw = typeof call_draw !== 'undefined' ? call_draw : true
+        // update_height: function (call_draw) {
+        //     // Python --> JavaScript
+        //     // console.log('update_height');
 
-            this.canvas.height = this.model.get('_height');
-            this.canvas.style.height = this.model.get('_height') + 'px'
+        //     call_draw = typeof call_draw !== 'undefined' ? call_draw : true
 
-            // Changing width or height atomatically clears the display so we need to redraw it.
-            if (call_draw) this.draw_image();
-        },
+        //     var value = this.model.get('_height');
+        //     if (value == 0) {
+        //         value = this.image.height
+        //     }
+
+        //     this.canvas.height = value
+        //     this.canvas.style.height = value + 'px'
+
+        //     // Changing width or height atomatically clears the display so we need to redraw it.
+        //     if (call_draw) this.draw_image();
+        // },
 
         update_src: function () {
             // Python --> JavaScript
             console.log('update_src');
 
-            // Copy image src from Backbone model to internal <img> element.
-            this.image.src = this.model.get('_src');
+            // call_draw = typeof call_draw !== 'undefined' ? call_draw : true
 
-            // Redraw display.
-            this.draw_image();
+            // Copy image src from Backbone model to internal <img> element.
+            this.image.src = this.model.get('src');
         },
 
-        draw_image: function () {
+        draw: function (image, xfrm) {
             // Draw image data from internal <img> to the <canvas>.
-            console.log('draw_image');
+            console.log('draw');
 
-            if (this.model.has('_src')) {
-                if (this.model.get('_src') != '') {
-                    // Draw image to screen and apply transform.
-                    this.context.drawImage(this.image, 0, 0);
-                }
-            }
+            var value
+            value = image.height
+            this.canvas.height = value
+            this.canvas.style.height = value + 'px'
+            this.model.set('_height', value);
+
+            value = image.width
+            this.canvas.width = value
+            this.canvas.style.width = value + 'px'
+            this.model.set('_width', value);
+
+            // Draw image to screen and apply transform.
+            this.context.drawImage(image, 0, 0);
+
+            // Must call this.touch() after any modifications to Backbone Model data.
+            this.touch();
         },
 
         /////////////////////////////////////////////
@@ -139,14 +168,14 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
             var info = {
                 canvasX: x,
-                canvasY: y
+                canvasY: y,
             }
 
             // Copy select system mouse event attributes over to this application's mouse event
             // structure.
             var attributes = ['type', 'timeStamp', 'button',
                 'ctrlKey', 'altKey', 'shiftKey', 'metaKey',
-                'clientX', 'clientY'
+                'clientX', 'clientY',
             ]
 
             var key, ix
@@ -169,7 +198,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
     });
 
-    // Register CanvasView with widget manager.
-    console.log('register');
+    // Register View with widget manager.
+    // console.log('register');
     WidgetManager.register_widget_view('CanvasView', CanvasView);
 });
