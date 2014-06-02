@@ -3,19 +3,18 @@
 
 ## Motivation
 
-The HTML5 Canvas Element is a nice tool for displaying resolution-dependent bitmap data.  It's
+The HTML5 Canvas Element is a powerful tool for displaying resolution-dependent bitmap data.  It's
 great for efficiently rendering 2D graphics, images, artwork, or game components.  My current
-interest in the canvas element is to use it as the foundation for an interactive image viewer
-within the IPython [Notebook](http://ipython.org/notebook.html) widget
+interest in the Canvas Element is as the foundation for an interactive image viewer
+within the IPython
+[Notebook](http://ipython.org/notebook.html) widget
 [framework](http://nbviewer.ipython.org/github/ipython/ipython/blob/2.x/examples/Interactive%20Widgets/Index.ipynb).
-
-TODO: thoughts about ipython notebook, widgets, combined data processing, documentation, interactive exploration
 
 I knew early on that I would need to learn a about JavaScript to make this project work. JavaScript
 is a really curious programming language, where the basic language itself is a wilderness of of
 bizarre constructs.  Navigating through that is risky without a solid, practical reference
-[book](https://play.google.com/store/books/details/Douglas_Crockford_JavaScript_The_Good_
-Parts?id=PXa2bby0oQ0C). So many great external libraries and design patterns have developed over
+[book](https://play.google.com/store/books/details/Douglas_Crockford_JavaScript_The_Good_Parts?id=PXa2bby0oQ0C).
+So many great external libraries and design patterns have developed over
 the years such that most people today seem to enjoy working with the language.  I was still
 surprised, however, at how much I had to learn about the [RequireJS](http://requirejs.org/) and
 [BackboneJS](http://backbonejs.org/) libraries before I could make significant progress on the
@@ -47,9 +46,14 @@ sense to me.
 
 - Image data synchronized between front- and back-end as Base64-encoded PNG-compressed data.
 
-- The IPython Traitlet managing data synchronization is to be a valid `src` string.  The fact that
-  data originated from a Numpy array on back-end will have impact on front-end.  I will try to make
-  it possible to supply an arbitrary URL instead of a Numpy array.
+- The fundamental data structure synchronized between the back- and front-end is a `src` string
+  containing a valid URL one could use to display an image using the HTML Image Element `<img>`.
+  This is similar to how the IPython built-in Image Widget manages its data.  Note that it is quite
+  straightforward to embed compressed image data as a large string within a URL description.
+
+- The direct and programmatic display of image data will be facilitated by a second derived class
+  that fully automates the process of creating URLs with embedded data.  The user will be exposed
+  at the back-end to a class property containing a Numpy array of image data.
 
 
 ## Example Usage
