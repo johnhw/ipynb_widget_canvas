@@ -108,5 +108,3 @@ def png_compress(data):
     fmt = 'png'
 
     return results, fmt
-
-
