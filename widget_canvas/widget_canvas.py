@@ -87,6 +87,12 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         if width:
             self._width = width
 
+    def display(self):
+        """
+        Display to Notebook using IPython hooks.
+        """
+        IPython.display.display(self)
+
     #####################################################
     # Traitlet data sync event handlers.
     def _handle_mouse(self, name_trait, info_event):  # info_old, info_new):

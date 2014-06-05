@@ -25,8 +25,8 @@ sense to me.
 
 ## Design Thoughts
 
-- My immediate plans for the Canvas Widget are to implement just the functionality required by my
-  quantitative image viewer project.  This includes:
+- My immediate plans for the Canvas Widget are to implement the functionality required by my
+  other quantitative image viewer project.  This includes:
   - Display an image via URL
   - Display an image from a Numpy array: gray scale, RGB, or RGBA
   - Support image zooming and panning via mouse
@@ -42,7 +42,7 @@ sense to me.
   widgets.  I would like for this widget to be as easy (or as hard??) to use as the built-in
   widgets.
 
-- Image data is to accessed as a Python class property in a form compatible with a Numpy array.
+- Image data accessed as a Python class property in a form compatible with a Numpy array.
 
 - Image data synchronized between front- and back-end as Base64-encoded PNG-compressed data.
 
@@ -157,7 +157,7 @@ and solving my implementation problems.
   mouseover   | mouse is moved onto the element that has the listener attached or onto one of its children.
   mouseout    | mouse is moved off the element that has the listener attached or off one of its children.
 
-- Understanding Canvas element mouse
+- Understanding `Canvas Element` mouse
   [coordinates](http://www.html5canvastutorials.com/advanced/html5-canvas-mouse-coordinates/)
   and
   [events](http://stackoverflow.com/questions/10001283/html5-canvas-how-to-handle-mousedown-mouseup-mouseclick#)
