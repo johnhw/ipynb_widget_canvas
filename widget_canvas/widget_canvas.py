@@ -105,10 +105,11 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         # Call all registered back-end event handlers with updated information.
         if info_event['type'] == 'mousemove':
             if self._flag_mouse_down:
+                info_event['type'] = 'mousedrag'
                 self._mouse_drag_dispatcher(info_event)
             else:
                 self._mouse_move_dispatcher(info_event)
-        elif info_event['type'] == 'mousedown':
+        elif info_event['type'] == str('mousedown'):
             self._flag_mouse_down = True
         elif info_event['type'] == 'mouseup':
             if self._flag_mouse_down:
