@@ -20,7 +20,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
         render: function () {
             // Render a widget's view instance to the DOM.
-            console.log('render');
+            // console.log('render');
 
             // This project's view is quite simple: just a single <canvas> element.
             this.setElement('<canvas />');
@@ -46,9 +46,6 @@ require(["widgets/js/widget"], function (WidgetManager) {
                 if (this.model.get('src') != '') {
                     this.update_src();
                 }
-                // this.update_width(false);
-                // this.update_height(false);
-                // this.draw_image();
             }
 
             // I noticed problems if this update() function call was left out, e.g. second views of
@@ -71,47 +68,37 @@ require(["widgets/js/widget"], function (WidgetManager) {
         //             //
         //             return CanvasView.__super__.update.apply(this);
         //             },
-
         // update_width: function (call_draw) {
         //     // Python --> JavaScript
         //     // console.log('update_width');
-
         //     // Default parameter value.
         //     call_draw = typeof call_draw !== 'undefined' ? call_draw : true
-
         //     var value = this.model.get('_width');
         //     if (value == 0) {
         //         value = this.image.width
         //     }
-
         //     this.canvas.width = value
         //     this.canvas.style.width = value + 'px'
-
         //     // Changing width or height automatically clears the display so we need to redraw it.
         //     if (call_draw) this.draw_image();
         // },
-
         // update_height: function (call_draw) {
         //     // Python --> JavaScript
         //     // console.log('update_height');
-
         //     call_draw = typeof call_draw !== 'undefined' ? call_draw : true
-
         //     var value = this.model.get('_height');
         //     if (value == 0) {
         //         value = this.image.height
         //     }
-
         //     this.canvas.height = value
         //     this.canvas.style.height = value + 'px'
-
         //     // Changing width or height atomatically clears the display so we need to redraw it.
         //     if (call_draw) this.draw_image();
         // },
 
         update_src: function () {
             // Python --> JavaScript
-            console.log('update_src');
+            // console.log('update_src');
 
             // call_draw = typeof call_draw !== 'undefined' ? call_draw : true
 
@@ -121,7 +108,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
         draw: function (image, xfrm) {
             // Draw image data from internal <img> to the <canvas>.
-            console.log('draw');
+            // console.log('draw');
 
             var value
             value = image.height
@@ -157,9 +144,9 @@ require(["widgets/js/widget"], function (WidgetManager) {
             //                  'mouseover':  'handle_mouse',
         },
 
-        // Mouse events.
+        // Extract information about a mouse event.
         // https://developer.mozilla.org/en-US/docs/Web/Reference/Events/mousemove
-        _build_mouse_event: function (ev) {
+        _build_mouse_info: function (ev) {
             // http://stackoverflow.com/questions/17130395/canvas-html5-real-mouse-position
             // https://developer.mozilla.org/en-US/docs/Web/API/Element.getBoundingClientRect
             var rect = this.canvas.getBoundingClientRect();
@@ -187,12 +174,13 @@ require(["widgets/js/widget"], function (WidgetManager) {
             return info
         },
 
+        // Handle a mouse event.
         handle_mouse: function (ev) {
             // Event handler responding to mouse motion and button clicks.
-            var info = this._build_mouse_event(ev)
+            var info = this._build_mouse_info(ev)
             this.model.set('_mouse', info);
 
-            // Must call this.touch() after any modifications to model data.
+            // Must call this.touch() after any modifications to Backbone Model data.
             this.touch();
         },
 

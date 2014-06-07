@@ -32,7 +32,8 @@ def _read_local_js(fname):
 
 def _bootstrap_js():
     """
-    Load application-specific JavaScript source code and inject into current Notebook session.
+    Load application-specific JavaScript source code and inject into
+    current Notebook session.
     """
     files = ['widget_canvas.js']
 
@@ -63,6 +64,12 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         """
         Instantiate a new CanvasWidget object.
         """
+
+        # Bootstrap Widget's JavaScript code into Notebook browser environment.
+        # TODO: Is this really the best place to put this function call?  It'll get called
+        # each time a class is generated.
+        _bootstrap_js()
+
         super(CanvasWidget, self).__init__(**kwargs)
 
         if src is None:
@@ -198,9 +205,3 @@ class CanvasImageWidget(CanvasWidget):
 
         # Build src string and put it into Traitlet for synchronizing with front-end.
         self.src = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
-
-
-#################################################
-# Bootstrap applications's JavaScript code into current Notebook Session.
-#
-_bootstrap_js()
