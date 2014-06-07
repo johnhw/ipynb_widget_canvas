@@ -3,6 +3,8 @@ from __future__ import division, print_function, unicode_literals
 
 import os
 import base64
+import time
+
 import IPython.html.widgets
 import image
 
@@ -32,8 +34,7 @@ def _read_local_js(fname):
 
 def _bootstrap_js():
     """
-    Load application-specific JavaScript source code and inject into
-    current Notebook session.
+    Load application-specific JavaScript source code and inject into current Notebook session.
     """
     files = ['widget_canvas.js']
 
@@ -64,12 +65,6 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         """
         Instantiate a new CanvasWidget object.
         """
-
-        # Bootstrap Widget's JavaScript code into Notebook browser environment.
-        # TODO: Is this really the best place to put this function call?  It'll get called
-        # each time a class is generated.
-        _bootstrap_js()
-
         super(CanvasWidget, self).__init__(**kwargs)
 
         if src is None:
@@ -158,7 +153,7 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         self._mouse_drag_dispatcher.register_callback(callback, remove=remove)
 
 
-class CanvasImageWidget(CanvasWidget):
+class ImageWidget(CanvasWidget):
     """
     Display and manipulate images using HTML5 Canvas with IPython Notebook widget system.
     This class builds upon CanvasWidget making it easier to work with images.
@@ -177,7 +172,7 @@ class CanvasImageWidget(CanvasWidget):
         """
         Instantiate a new CanvasImageWidget object.
         """
-        super(CanvasImageWidget, self).__init__(**kwargs)
+        super(ImageWidget, self).__init__(**kwargs)
         self.image = data
 
     @property
@@ -205,3 +200,10 @@ class CanvasImageWidget(CanvasWidget):
 
         # Build src string and put it into Traitlet for synchronizing with front-end.
         self.src = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
+
+
+#################################################
+
+# Bootstrap Widget's JavaScript code into Notebook browser environment.
+_bootstrap_js()
+time.sleep(0.01)  # sleep to give time for JavaScript stuff to get set up in the background.
