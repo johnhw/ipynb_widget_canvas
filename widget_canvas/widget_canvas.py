@@ -58,8 +58,9 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
     _width = IPython.utils.traitlets.CFloat(sync=True)
     _height = IPython.utils.traitlets.CFloat(sync=True)
 
-    # Mouse event information.
+    # Mouse and keyboard event information.
     _mouse = IPython.utils.traitlets.Dict(sync=True)
+    _key = IPython.utils.traitlets.Dict(sync=True)
 
     def __init__(self, src=None, width=None, height=None, **kwargs):
         """
@@ -73,13 +74,17 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         # Setup internal Python handler for front-end mouse events synced through
         # the self._mouse Traitlet.
         self.on_trait_change(self._handle_mouse, str('_mouse'))
+        self.on_trait_change(self._handle_keypress, str('_key'))
 
         # Setup dispatchers to manage user-defined Python event handlers.
         self._mouse_move_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        self._mouse_click_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
         self._mouse_drag_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        self._mouse_click_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        self._mouse_down_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        self._mouse_up_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
 
         self._flag_mouse_down = False
+        self._drag_origin = None
 
         # Store supplied src data in traitlet.
         self.src = src
@@ -97,32 +102,61 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
 
     #####################################################
     # Methods to handle Traitlet data sync events.
-    def _handle_mouse(self, name_trait, info_event):  # info_old, info_new):
+    def _handle_mouse(self, name_trait, event):  # info_old, info_new):
         """
         Handle mouse events
         JavaScript front-end events handled via Python back-end callback functions.
         """
 
         # Call all registered back-end event handlers with updated information.
-        if info_event['type'] == 'mousemove':
+        if event['type'] == 'mousemove':
+            # The mouse has moved.
             if self._flag_mouse_down:
-                info_event['type'] = 'mousedrag'
-                self._mouse_drag_dispatcher(info_event)
+                # Mouse has moved with button down.  This is really a `mousedrag` event.
+                if not self._drag_origin:
+                    raise ValueError('drag origin should have been defined prior to this function')
+
+                event['type'] = 'mousedrag'
+                event['dragX'] = event['canvasX'] - self._drag_origin[0]
+                event['dragY'] = event['canvasY'] - self._drag_origin[1]
+
+                self._mouse_drag_dispatcher(event)
             else:
-                self._mouse_move_dispatcher(info_event)
-        elif info_event['type'] == str('mousedown'):
+                # Mouse has moved with button up.
+                self._mouse_move_dispatcher(event)
+
+        elif event['type'] == 'mousedown':
+            # Mouse button has been clicked down.
+
+            # Update drag origin in case the mouse moves and this turns into a mouse drag event.
+            if not self._drag_origin:
+                self._drag_origin = [event['canvasX'], event['canvasY']]
+
             self._flag_mouse_down = True
-        elif info_event['type'] == 'mouseup':
+            self._mouse_down_dispatcher(event)
+
+        elif event['type'] == 'mouseup':
+            # Mouse button has been lifted.
+            self._mouse_up_dispatcher(event)
+
             if self._flag_mouse_down:
-                self._mouse_click_dispatcher(info_event)
+                # Mouse changing from down to up equals a `click` event.
+                self._mouse_click_dispatcher(event)
+
+            # Clear flags.
             self._flag_mouse_down = False
+            self._drag_origin = None
+
         else:
             pass
 
+    def _handle_keypress(self, name_trait, event):
+        print(event)
+
     #######################################################
-    # Methods to register user's Python event handler functions.
+    # User-facing methods to register Python event handler functions.
     #
-    # The signature for each callback registration function is similar:
+    # The signature for each registration function is similar:
     #   callback : function to be called with event information as argument.
     #   remove : bool (optional), set to true to unregister the callback function.
     #
@@ -132,11 +166,11 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
 
     def on_mouse_down(self, callback, remove=False):
         """Repond to mouse button down."""
-        self._mouse_move_dispatcher.register_callback(callback, remove=remove)
+        self._mouse_down_dispatcher.register_callback(callback, remove=remove)
 
     def on_mouse_up(self, callback, remove=False):
         """Repond to mouse button up."""
-        self._mouse_move_dispatcher.register_callback(callback, remove=remove)
+        self._mouse_up_dispatcher.register_callback(callback, remove=remove)
 
     def on_mouse_click(self, callback, remove=False):
         """Repond to mouse button click: button down followed by button up."""

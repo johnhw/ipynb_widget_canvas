@@ -23,7 +23,8 @@ require(["widgets/js/widget"], function (WidgetManager) {
             // console.log('render');
 
             // This project's view is quite simple: just a single <canvas> element.
-            this.setElement('<canvas />');
+            // http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
+            this.setElement('<canvas tabindex="1" />');
 
             // Gather some handy references for the canvas and its context.
             this.canvas = this.el
@@ -138,6 +139,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
             'mousemove': 'handle_mouse',
             'mouseup': 'handle_mouse',
             'mousedown': 'handle_mouse',
+            // 'keydown': 'handle_keypress',
             //                  'mouseenter': 'handle_mouse',  // don't worry about these other mouse
             //                  'mouseleave': 'handle_mouse',  // events for now.
             //                  'mouseout':   'handle_mouse',
@@ -150,8 +152,8 @@ require(["widgets/js/widget"], function (WidgetManager) {
             // http://stackoverflow.com/questions/17130395/canvas-html5-real-mouse-position
             // https://developer.mozilla.org/en-US/docs/Web/API/Element.getBoundingClientRect
             var rect = this.canvas.getBoundingClientRect();
-            var x = ev.clientX - rect.left
-            var y = ev.clientY - rect.top
+            var x = parseInt(ev.clientX - rect.left);
+            var y = parseInt(ev.clientY - rect.top);
 
             var info = {
                 canvasX: x,
@@ -177,6 +179,8 @@ require(["widgets/js/widget"], function (WidgetManager) {
         // Handle a mouse event.
         handle_mouse: function (ev) {
             // Event handler responding to mouse motion and button clicks.
+            // console.log(ev);
+
             var info = this._build_mouse_info(ev)
             this.model.set('_mouse', info);
 
@@ -184,6 +188,15 @@ require(["widgets/js/widget"], function (WidgetManager) {
             this.touch();
         },
 
+        // Handle keyboard event.
+        // http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
+        handle_keypress: function (ev) {
+            console.log(ev);
+            this.model.set('_key', ev);
+
+            // Must call this.touch() after any modifications to Backbone Model data.
+            this.touch();
+        }
     });
 
     // Register View with widget manager.
