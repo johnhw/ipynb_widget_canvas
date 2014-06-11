@@ -135,15 +135,15 @@ require(["widgets/js/widget"], function (WidgetManager) {
         //
         // Great reference for JavaScript events:
         // https://developer.mozilla.org/en-US/docs/Web/Reference/Events
-        events: { //'click': 'handle_click',
+        events: {
             'mousemove': 'handle_mouse',
             'mouseup': 'handle_mouse',
             'mousedown': 'handle_mouse',
-            // 'keydown': 'handle_keypress',
-            //                  'mouseenter': 'handle_mouse',  // don't worry about these other mouse
-            //                  'mouseleave': 'handle_mouse',  // events for now.
-            //                  'mouseout':   'handle_mouse',
-            //                  'mouseover':  'handle_mouse',
+            //  'click':      'handle_click',
+            //  'mouseenter': 'handle_mouse',  // don't worry about these other mouse
+            //  'mouseleave': 'handle_mouse',  // events for now.
+            //  'mouseout':   'handle_mouse',
+            //  'mouseover':  'handle_mouse',
         },
 
         // Extract information about a mouse event.

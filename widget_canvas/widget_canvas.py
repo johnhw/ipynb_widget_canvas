@@ -60,7 +60,7 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
 
     # Mouse and keyboard event information.
     _mouse = IPython.utils.traitlets.Dict(sync=True)
-    _key = IPython.utils.traitlets.Dict(sync=True)
+    # _key = IPython.utils.traitlets.Dict(sync=True)
 
     def __init__(self, src=None, width=None, height=None, **kwargs):
         """
@@ -74,7 +74,7 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         # Setup internal Python handler for front-end mouse events synced through
         # the self._mouse Traitlet.
         self.on_trait_change(self._handle_mouse, str('_mouse'))
-        self.on_trait_change(self._handle_keypress, str('_key'))
+        # self.on_trait_change(self._handle_keypress, str('_key'))
 
         # Setup dispatchers to manage user-defined Python event handlers.
         self._mouse_move_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
@@ -150,8 +150,8 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         else:
             pass
 
-    def _handle_keypress(self, name_trait, event):
-        print(event)
+    # def _handle_keypress(self, name_trait, event):
+    #     print(event)
 
     #######################################################
     # User-facing methods to register Python event handler functions.
