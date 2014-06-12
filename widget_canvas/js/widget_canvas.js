@@ -24,14 +24,25 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
             // This project's view is quite simple: just a single <canvas> element.
             // http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
-            this.setElement('<canvas tabindex="1" />');
+            this.setElement('<canvas />');
 
             // Gather some handy references for the canvas and its context.
             this.canvas = this.el
             this.context = this.canvas.getContext('2d');
 
-            // Internal image element serving to render new image src data.  This object will later
-            // be used as source data argument to the canvas' own `drawImage()` method.
+            // Prevent text selection cursor on canvas when click dragging.
+            // http://stackoverflow.com/questions/11805318/when-i-click-on-a-canvas-and-drag-my-mouse-the-cursor-changes-to-a-text-selecti
+            this.canvas.onmousedown = function (event) {
+                event.preventDefault();
+            }
+
+            // Prevent page from scroll with wheel events over canvas.
+            this.canvas.onwheel = function (event) {
+                event.preventDefault();
+            }
+
+            // Internal image element serving to render new image src data.  This object will
+            // later be used as source data argument to the canvas' own `drawImage()` method.
             this.image = new Image();
 
             // Event handle for loading new data into the image element.
@@ -53,49 +64,6 @@ require(["widgets/js/widget"], function (WidgetManager) {
             // my model would not initially receive CSS style properties.
             this.update();
         },
-
-        //         update: function() {
-        //             // Python --> JavaScript
-        //             console.log('update');
-        //             //
-        //             // This method is called automatically for all traitlet 'change' events.  This
-        //             // was configured via the builtin widget.js from the method WidgetView.initialize()
-        //             // and again in DOMWidgetView() with code similar to the following:
-        //             //
-        //             // this.model.on('change', this.update, this);
-        //             //
-        //             // I'm using separate event handlers for each major part of my model and not
-        //             // relying upon this single all-encompassing event handler.
-        //             //
-        //             return CanvasView.__super__.update.apply(this);
-        //             },
-        // update_width: function (call_draw) {
-        //     // Python --> JavaScript
-        //     // console.log('update_width');
-        //     // Default parameter value.
-        //     call_draw = typeof call_draw !== 'undefined' ? call_draw : true
-        //     var value = this.model.get('_width');
-        //     if (value == 0) {
-        //         value = this.image.width
-        //     }
-        //     this.canvas.width = value
-        //     this.canvas.style.width = value + 'px'
-        //     // Changing width or height automatically clears the display so we need to redraw it.
-        //     if (call_draw) this.draw_image();
-        // },
-        // update_height: function (call_draw) {
-        //     // Python --> JavaScript
-        //     // console.log('update_height');
-        //     call_draw = typeof call_draw !== 'undefined' ? call_draw : true
-        //     var value = this.model.get('_height');
-        //     if (value == 0) {
-        //         value = this.image.height
-        //     }
-        //     this.canvas.height = value
-        //     this.canvas.style.height = value + 'px'
-        //     // Changing width or height atomatically clears the display so we need to redraw it.
-        //     if (call_draw) this.draw_image();
-        // },
 
         update_src: function () {
             // Python --> JavaScript
@@ -139,6 +107,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
             'mousemove': 'handle_mouse',
             'mouseup': 'handle_mouse',
             'mousedown': 'handle_mouse',
+            'wheel': 'handle_mouse',
             //  'click':      'handle_click',
             //  'mouseenter': 'handle_mouse',  // don't worry about these other mouse
             //  'mouseleave': 'handle_mouse',  // events for now.
@@ -162,22 +131,32 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
             // Copy select system mouse event attributes over to this application's mouse event
             // structure.
-            var attributes = ['type', 'timeStamp', 'button',
+            var attr_basic = ['type', 'timeStamp', 'button',
                 'ctrlKey', 'altKey', 'shiftKey', 'metaKey',
-                'clientX', 'clientY',
+                'clientX', 'clientY'
             ]
-
             var key, ix
-            for (ix in attributes) {
-                key = attributes[ix]
+            for (ix in attr_basic) {
+                key = attr_basic[ix]
                 info[key] = ev[key]
+            }
+
+            // Check for `wheel` event.
+            // https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel
+            var attr_wheel = ['deltaMode', 'deltaX', 'deltaY', 'deltaZ']
+            if (info['type'] == 'wheel') {
+                for (ix in attr_wheel) {
+                    key = attr_wheel[ix]
+                    info[key] = ev[key]
+                }
             }
 
             return info
         },
 
         // Handle a mouse event.
-        handle_mouse: function (ev) {
+        handle_mouse: function (jev) {
+            var ev = jev.originalEvent
             // Event handler responding to mouse motion and button clicks.
             // console.log(ev);
 
@@ -188,15 +167,28 @@ require(["widgets/js/widget"], function (WidgetManager) {
             this.touch();
         },
 
+        // // Handle mouse wheel scroll event.
+        // handle_wheel: function (jev) {
+        //     var ev = jev.originalEvent
+
+        //     console.log(ev);
+        //     console.log(ev.clientX);
+        //     // this.model.set('_key', ev);
+
+        //     // Must call this.touch() after any modifications to Backbone Model data.
+        //     this.touch();
+        // },
+
         // Handle keyboard event.
         // http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
-        handle_keypress: function (ev) {
-            console.log(ev);
-            this.model.set('_key', ev);
+        // handle_keypress: function (ev) {
+        //     console.log(ev);
+        //     this.model.set('_key', ev);
 
-            // Must call this.touch() after any modifications to Backbone Model data.
-            this.touch();
-        }
+        //     // Must call this.touch() after any modifications to Backbone Model data.
+        //     this.touch();
+        // }
+
     });
 
     // Register View with widget manager.

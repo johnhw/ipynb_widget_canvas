@@ -43,6 +43,7 @@ def _bootstrap_js():
         IPython.display.display_javascript(js, raw=True)
 
 #################################################
+#################################################
 
 
 class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
@@ -60,7 +61,6 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
 
     # Mouse and keyboard event information.
     _mouse = IPython.utils.traitlets.Dict(sync=True)
-    # _key = IPython.utils.traitlets.Dict(sync=True)
 
     def __init__(self, src=None, width=None, height=None, **kwargs):
         """
@@ -74,7 +74,6 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         # Setup internal Python handler for front-end mouse events synced through
         # the self._mouse Traitlet.
         self.on_trait_change(self._handle_mouse, str('_mouse'))
-        # self.on_trait_change(self._handle_keypress, str('_key'))
 
         # Setup dispatchers to manage user-defined Python event handlers.
         self._mouse_move_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
@@ -82,6 +81,7 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         self._mouse_click_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
         self._mouse_down_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
         self._mouse_up_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        self._mouse_wheel_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
 
         self._flag_mouse_down = False
         self._drag_origin = None
@@ -102,10 +102,9 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
 
     #####################################################
     # Methods to handle Traitlet data sync events.
+    #
     def _handle_mouse(self, name_trait, event):  # info_old, info_new):
-        """
-        Handle mouse events
-        JavaScript front-end events handled via Python back-end callback functions.
+        """Python back-end handling of JavaScript front-end generated mouse events.
         """
 
         # Call all registered back-end event handlers with updated information.
@@ -114,9 +113,10 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
             if self._flag_mouse_down:
                 # Mouse has moved with button down.  This is really a `mousedrag` event.
                 if not self._drag_origin:
-                    raise ValueError('drag origin should have been defined prior to this function')
+                    raise ValueError('drag origin should have been defined prior to \
+                                      calling this function')
 
-                event['type'] = 'mousedrag'
+                event['type'] = str('mousedrag')
                 event['dragX'] = event['canvasX'] - self._drag_origin[0]
                 event['dragY'] = event['canvasY'] - self._drag_origin[1]
 
@@ -128,7 +128,7 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         elif event['type'] == 'mousedown':
             # Mouse button has been clicked down.
 
-            # Update drag origin in case the mouse moves and this turns into a mouse drag event.
+            # Update drag origin in case the mouse moves afterwards and generates a drag event.
             if not self._drag_origin:
                 self._drag_origin = [event['canvasX'], event['canvasY']]
 
@@ -140,18 +140,19 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
             self._mouse_up_dispatcher(event)
 
             if self._flag_mouse_down:
-                # Mouse changing from down to up equals a `click` event.
+                # Mouse changing from "down" to "up" generates a "click" event.
                 self._mouse_click_dispatcher(event)
 
-            # Clear flags.
+            # Clear state flags.
             self._flag_mouse_down = False
             self._drag_origin = None
 
+        elif event['type'] == 'wheel':
+            # Wheel scroll event.
+            self._mouse_wheel_dispatcher(event)
+
         else:
             pass
-
-    # def _handle_keypress(self, name_trait, event):
-    #     print(event)
 
     #######################################################
     # User-facing methods to register Python event handler functions.
@@ -161,24 +162,34 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
     #   remove : bool (optional), set to true to unregister the callback function.
     #
     def on_mouse_move(self, callback, remove=False):
-        """Repond to motion."""
+        """Repond to mouse motion.
+        """
         self._mouse_move_dispatcher.register_callback(callback, remove=remove)
 
+    def on_mouse_drag(self, callback, remove=False):
+        """Repond to drag motion: motion while button is down.
+        """
+        self._mouse_drag_dispatcher.register_callback(callback, remove=remove)
+
     def on_mouse_down(self, callback, remove=False):
-        """Repond to mouse button down."""
+        """Repond to mouse button down.
+        """
         self._mouse_down_dispatcher.register_callback(callback, remove=remove)
 
     def on_mouse_up(self, callback, remove=False):
-        """Repond to mouse button up."""
+        """Repond to mouse button up.
+        """
         self._mouse_up_dispatcher.register_callback(callback, remove=remove)
 
     def on_mouse_click(self, callback, remove=False):
-        """Repond to mouse button click: button down followed by button up."""
+        """Repond to mouse button click: button down followed by button up.
+        """
         self._mouse_click_dispatcher.register_callback(callback, remove=remove)
 
-    def on_mouse_drag(self, callback, remove=False):
-        """Repond to drag motion: motion while button is down."""
-        self._mouse_drag_dispatcher.register_callback(callback, remove=remove)
+    def on_mouse_wheel(self, callback, remove=False):
+        """Repond to mouse wheel scroll event.
+        """
+        self._mouse_wheel_dispatcher.register_callback(callback, remove=remove)
 
 
 class ImageWidget(CanvasWidget):
