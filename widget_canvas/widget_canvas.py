@@ -59,20 +59,30 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
     _width = IPython.utils.traitlets.CFloat(sync=True)
     _height = IPython.utils.traitlets.CFloat(sync=True)
 
+    # Image transformation.
+    _transformation = IPython.utils.traitlets.List(sync=True)
+
     # Mouse and keyboard event information.
     _mouse = IPython.utils.traitlets.Dict(sync=True)
 
-    def __init__(self, src=None, width=None, height=None, **kwargs):
+    def __init__(self, src='', width=None, height=None, **kwargs):
         """
         Instantiate a new CanvasWidget object.
         """
         super(CanvasWidget, self).__init__(**kwargs)
 
-        if src is None:
-            src = ''
+        # Store supplied init data in traitlet(s).
+        if src:
+            self.src = src
+
+        if height:
+            self._height = height
+
+        if width:
+            self._width = width
 
         # Setup internal Python handler for front-end mouse events synced through
-        # the self._mouse Traitlet.
+        # the Traitlet self._mouse.
         self.on_trait_change(self._handle_mouse, str('_mouse'))
 
         # Setup dispatchers to manage user-defined Python event handlers.
@@ -83,16 +93,9 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         self._mouse_up_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
         self._mouse_wheel_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
 
+        # Helper variables for mouse state.
         self._flag_mouse_down = False
         self._drag_origin = None
-
-        # Store supplied src data in traitlet.
-        self.src = src
-        if height:
-            self._height = height
-
-        if width:
-            self._width = width
 
     def display(self):
         """

@@ -170,21 +170,17 @@ require(["widgets/js/widget"], function (WidgetManager) {
         // // Handle mouse wheel scroll event.
         // handle_wheel: function (jev) {
         //     var ev = jev.originalEvent
-
         //     console.log(ev);
         //     console.log(ev.clientX);
         //     // this.model.set('_key', ev);
-
         //     // Must call this.touch() after any modifications to Backbone Model data.
         //     this.touch();
         // },
-
         // Handle keyboard event.
         // http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
         // handle_keypress: function (ev) {
         //     console.log(ev);
         //     this.model.set('_key', ev);
-
         //     // Must call this.touch() after any modifications to Backbone Model data.
         //     this.touch();
         // }
