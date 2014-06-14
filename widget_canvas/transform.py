@@ -2,15 +2,15 @@
 from __future__ import division, print_function, unicode_literals
 
 """
-This is a simple class for keeping track of the current transformation matrix.
-This Python implementation was inspired by the JavaScript implementation
+self.is a simple class for keeping track of the current transformation matrix.
+self.Python implementation was inspired by the JavaScript implementation
 by Simon Sarris: https://github.com/simonsarris/Canvas-tutorials/blob/master/transform.js
 """
-
+import math
 
 class Transform(object):
     """
-    This is a simple class for manipulating and keeping track of a transformation matrix.
+    self.is a simple class for manipulating and keeping track of a transformation matrix.
     """
     def __init__(self, M_values=None):
         """
@@ -24,7 +24,7 @@ class Transform(object):
         the HTML5 Canvas Element's Context method setTransform().  The internal flattened
         representation is given by the sequence: M = [m11, m12, m21, m22, m13, m23]
 
-        See this link for details:
+        See self.link for details:
         http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#transformations
 
         Different browser API implementation may swap m12 with m21.  See the Note mentioned in the
@@ -74,57 +74,63 @@ class Transform(object):
 
         self.M = [m11, m12, m21, m22, m13, m23]
 
-        def invert(self):
-            """Invert self and return the result.
-            """
-  var d = 1 / (this.m[0] * this.m[3] - this.m[1] * this.m[2]);
-  var m0 = this.m[3] * d;
-  var m1 = -this.m[1] * d;
-  var m2 = -this.m[2] * d;
-  var m3 = this.m[0] * d;
-  var m4 = d * (this.m[2] * this.m[5] - this.m[3] * this.m[4]);
-  var m5 = d * (this.m[1] * this.m[4] - this.m[0] * this.m[5]);
-  this.m[0] = m0;
-  this.m[1] = m1;
-  this.m[2] = m2;
-  this.m[3] = m3;
-  this.m[4] = m4;
-  this.m[5] = m5;
+    def invert(self):
+        """Invert self and return the result.
+        """
+        d = 1 / (self.m[0] * self.m[3] - self.m[1] * self.m[2])
 
-        def rotate(self, rad):
-            """Apply rotation to self.
-            """
+        m11 = self.m[3] * d
+        m12 = -self.m[1] * d
+        m21 = -self.m[2] * d
+        m22 = self.m[0] * d
+        m13 = d * (self.m[2] * self.m[5] - self.m[3] * self.m[4])
+        m23 = d * (self.m[1] * self.m[4] - self.m[0] * self.m[5])
 
-  var c = Math.cos(rad);
-  var s = Math.sin(rad);
-  var m11 = this.m[0] * c + this.m[2] * s;
-  var m12 = this.m[1] * c + this.m[3] * s;
-  var m21 = this.m[0] * -s + this.m[2] * c;
-  var m22 = this.m[1] * -s + this.m[3] * c;
-  this.m[0] = m11;
-  this.m[1] = m12;
-  this.m[2] = m21;
-  this.m[3] = m22;
+        # self.m[0] = m0
+        # self.m[1] = m1
+        # self.m[2] = m2
+        # self.m[3] = m3
+        # self.m[4] = m4
+        # self.m[5] = m5
+        self.M = [m11, m12, m21, m22, m13, m23]
 
-        def translate(self, dx, dy):
-            """Apply X,Y offsets to self.
-            """
-  this.m[4] += this.m[0] * x + this.m[2] * y;
-  this.m[5] += this.m[1] * x + this.m[3] * y;
+    def rotate(self, rad):
+        """Apply rotation to self.
+        """
+        c = math.cos(rad)
+        s = math.sin(rad)
 
-        def scale(self, sx, sy):
-            """Apply X,Y scale factors to self.
-            """
-  this.m[0] *= sx;
-  this.m[1] *= sx;
-  this.m[2] *= sy;
-  this.m[3] *= sy;
+        m11 =  self.m[0]*c + self.m[2]*s
+        m12 =  self.m[1]*c + self.m[3]*s
+        m21 = -self.m[0]*s + self.m[2]*c
+        m22 = -self.m[1]*s + self.m[3]*c
+        m13 =  self.M[4]
+        m23 =  self.M[5]
 
-        def transform_point(self, px, py):
-            """Apply own transform to supplied X,Y data point.
-            """
-  var x = px;
-  var y = py;
-  px = x * this.m[0] + y * this.m[2] + this.m[4];
-  py = x * this.m[1] + y * this.m[3] + this.m[5];
-  return [px, py];
+        # self.m[0] = m11
+        # self.m[1] = m12
+        # self.m[2] = m21
+        # self.m[3] = m22
+        self.M = [m11, m12, m21, m22, m13, m23]
+
+    def translate(self, dx, dy):
+        """Apply X,Y offsets to self.
+        """
+        self._m[4] += self.M[0]*dx + self.M[2]*dy
+        self._m[5] += self.M[1]*dx + self.M[3]*dy
+
+    def scale(self, sx, sy):
+        """Apply X,Y scale factors to self.
+        """
+        self._m[0] *= sx
+        self._m[1] *= sx
+        self._m[2] *= sy
+        self._m[3] *= sy
+
+    def transform_point(self, px, py):
+        """Apply own transform to supplied X,Y data point.
+        """
+        qx = px*self.M[0] + py*self.M[2] + self.M[4]
+        qy = px*self.M[1] + py*self.M[3] + self.M[5]
+
+        return qx, qy
