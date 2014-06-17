@@ -60,7 +60,7 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
     _height = IPython.utils.traitlets.CFloat(sync=True)
 
     # Image transformation.
-    _transformation = IPython.utils.traitlets.List(sync=True)
+    transformation = IPython.utils.traitlets.List(sync=True)
 
     # Mouse and keyboard event information.
     _mouse = IPython.utils.traitlets.Dict(sync=True)

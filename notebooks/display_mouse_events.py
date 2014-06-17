@@ -6,7 +6,6 @@ from IPython.html.widgets import HTMLWidget, TextareaWidget, ContainerWidget
 
 import widget_canvas as canvas
 
-
 # Bootstrap styles
 # http://getbootstrap.com/components/#labels
 style_A = 'label label-default'
@@ -17,7 +16,7 @@ style_E = 'label label-warning'
 style_F = 'label label-danger'
 
 
-def build(image):
+def display(image):
     """
     Build a simple compound display for playing with mouse events.
     """
@@ -58,8 +57,8 @@ def build(image):
     container_move = ContainerWidget(children=[wid_move, wid_move_XY])
     container_drag = ContainerWidget(children=[wid_drag, wid_drag_XY])
 
-    container_info = ContainerWidget(children=[container_move, container_drag, wid_down_up, wid_click,
-                                               wid_scroll, wid_event_text])
+    container_info = ContainerWidget(children=[container_move, container_drag, wid_down_up,
+                                               wid_click, wid_scroll, wid_event_text])
     container_info.set_css({'margin-left': '10px'})
 
     container_main = ContainerWidget(children=[wid_image, container_info])
@@ -132,15 +131,16 @@ def build(image):
     wid_image.on_mouse_wheel(handle_scroll)
     wid_image.on_mouse_wheel(handle_event)
 
-
-def display_my_widgets(widget, mod_hbox):
-    IPython.display.display(widget)
+    #############################################
+    # Display the widgets.
+    IPython.display.display(container_main)
 
     # Change class values after widget has been displayed to screen.
     wid_click.add_class(_click_classes[ix[0]])
     wid_scroll.add_class(_scroll_classes[iw[0]])
 
+    # List of widgets to be set to `hbox` style.
+    mod_hbox = [container_main, container_move, container_drag]
     for w in mod_hbox:
         w.remove_class('vbox')
         w.add_class('hbox')
-

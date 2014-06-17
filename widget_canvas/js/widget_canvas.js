@@ -13,8 +13,10 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
             // Backbone model --> JavaScript
             this.model.on('change:src', this.update_src, this);
+            this.model.on('change:transformation', this.update_transformation, this);
             // this.model.on('change:_height', this.update_height, this);
             // this.model.on('change:_width', this.update_width, this);
+
             CanvasView.__super__.initialize.apply(this, arguments);
         },
 
@@ -66,10 +68,8 @@ require(["widgets/js/widget"], function (WidgetManager) {
         },
 
         update_src: function () {
-            // Python --> JavaScript
+            // Model's `src`: Python --> JavaScript
             // console.log('update_src');
-
-            // call_draw = typeof call_draw !== 'undefined' ? call_draw : true
 
             // Copy image src from Backbone model to internal <img> element.
             this.image.src = this.model.get('src');
@@ -95,6 +95,15 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
             // Must call this.touch() after any modifications to Backbone Model data.
             this.touch();
+        },
+
+        update_transformation: function () {
+            // Model's `transformation`: Python --> JavaScript
+            console.log('update_transformation');
+
+            // Apply new transformation.
+            var M = this.model.get('transformation');
+            console.log(M);
         },
 
         /////////////////////////////////////////////

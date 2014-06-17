@@ -2,15 +2,16 @@
 from __future__ import division, print_function, unicode_literals
 
 """
-self.is a simple class for keeping track of the current transformation matrix.
+This is a simple class for keeping track of the current transformation matrix.
 self.Python implementation was inspired by the JavaScript implementation
 by Simon Sarris: https://github.com/simonsarris/Canvas-tutorials/blob/master/transform.js
 """
 import math
 
+
 class Transform(object):
     """
-    self.is a simple class for manipulating and keeping track of a transformation matrix.
+    This is a simple class for manipulating and keeping track of a transformation matrix.
     """
     def __init__(self, M_values=None):
         """
@@ -36,6 +37,9 @@ class Transform(object):
             self.M = M_values
         else:
             self.reset()
+
+    def __repr__(self):
+        return '{}'.format(self.M)
 
     @property
     def M(self):
@@ -75,23 +79,17 @@ class Transform(object):
         self.M = [m11, m12, m21, m22, m13, m23]
 
     def invert(self):
-        """Invert self and return the result.
+        """Invert self.
         """
-        d = 1 / (self.m[0] * self.m[3] - self.m[1] * self.m[2])
+        d = 1 / (self._m[0]*self._m[3] - self._m[1]*self._m[2])
 
-        m11 = self.m[3] * d
-        m12 = -self.m[1] * d
-        m21 = -self.m[2] * d
-        m22 = self.m[0] * d
-        m13 = d * (self.m[2] * self.m[5] - self.m[3] * self.m[4])
-        m23 = d * (self.m[1] * self.m[4] - self.m[0] * self.m[5])
+        m11 = self._m[3]*d
+        m12 = -self._m[1]*d
+        m21 = -self._m[2]*d
+        m22 = self._m[0]*d
+        m13 = d*(self._m[2]*self._m[5] - self._m[3]*self._m[4])
+        m23 = d*(self._m[1]*self._m[4] - self._m[0]*self._m[5])
 
-        # self.m[0] = m0
-        # self.m[1] = m1
-        # self.m[2] = m2
-        # self.m[3] = m3
-        # self.m[4] = m4
-        # self.m[5] = m5
         self.M = [m11, m12, m21, m22, m13, m23]
 
     def rotate(self, rad):
@@ -100,17 +98,13 @@ class Transform(object):
         c = math.cos(rad)
         s = math.sin(rad)
 
-        m11 =  self.m[0]*c + self.m[2]*s
-        m12 =  self.m[1]*c + self.m[3]*s
-        m21 = -self.m[0]*s + self.m[2]*c
-        m22 = -self.m[1]*s + self.m[3]*c
-        m13 =  self.M[4]
-        m23 =  self.M[5]
+        m11 = self._m[0]*c + self._m[2]*s
+        m12 = self._m[1]*c + self._m[3]*s
+        m21 = -self._m[0]*s + self._m[2]*c
+        m22 = -self._m[1]*s + self._m[3]*c
+        m13 = self.M[4]
+        m23 = self.M[5]
 
-        # self.m[0] = m11
-        # self.m[1] = m12
-        # self.m[2] = m21
-        # self.m[3] = m22
         self.M = [m11, m12, m21, m22, m13, m23]
 
     def translate(self, dx, dy):
