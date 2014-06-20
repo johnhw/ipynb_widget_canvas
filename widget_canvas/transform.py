@@ -13,7 +13,7 @@ class Transform(object):
     """
     This is a simple class for manipulating and keeping track of a transformation matrix.
     """
-    def __init__(self, M_values=None):
+    def __init__(self, values=None):
         """
         Create a new instance of a Transform.
         Defined by a sequence of six numbers from the elements
@@ -25,7 +25,7 @@ class Transform(object):
         the HTML5 Canvas Element's Context method setTransform().  The internal flattened
         representation is given by the sequence: M = [m11, m12, m21, m22, m13, m23]
 
-        See self.link for details:
+        See link for details:
         http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#transformations
 
         Different browser API implementation may swap m12 with m21.  See the Note mentioned in the
@@ -33,33 +33,50 @@ class Transform(object):
 
         Initialize self if optional values are supplied.
         """
-        if M_values:
-            self.M = M_values
-        else:
-            self.reset()
+        self.reset()
+        if values:
+            self.values = values
 
     def __repr__(self):
-        return '{}'.format(self.M)
+        """
+        Set transform to supplied values, M = [m11, m12, m21, m22, m13, m23].
+        """
+        return '{0:6.2f} {1:6.2f} {4:6.2f}\n{2:6.2f} {3:6.2f} {5:6.2f}\n'.format(self[0], self[1], self[2],
+                                                                           self[3], self[4], self[5])
+
+    ####################################################3
+
+    def __getitem__(self, key):
+        return self._values[key]
+
+    def __setitem__(self, key, value):
+        if type(key) is not int:
+            raise ValueError('Index type must be int. Received: {}'.format(type(key)))
+
+        if not (0 <= key <= 5):
+            raise ValueError('Index must be between 0 and 5: {:d}'.format(key))
+
+        self._values[key] = value
+
+    def __iter__(self):
+        return self._values.__iter__()
+
+    def __contains__(self, value):
+        return value in self._values
+
+    def iterkeys(self):
+        return self.__iter__()
 
     @property
-    def M(self):
-        """Return current transform, M = [m11, m12, m21, m22, m13, m23].
+    def values(self):
+        """Current transform, M = [m11, m12, m21, m22, m13, m23].
         """
-        return self._m
-
-    @M.setter
-    def M(self, M_values):
-        """Set transform to supplied values, M = [m11, m12, m21, m22, m13, m23].
-        """
-        if len(M_values) != 6:
-            raise ValueError('New transform must be a sequence of six numbers.')
-
-        self._m = M_values
+        return self._values
 
     def reset(self):
         """Reset self to identity transform.
         """
-        self._m = [1, 0, 0, 1, 0, 0]
+        self._values = [1, 0, 0, 1, 0, 0]
 
     def multiply(self, Q):
         """Apply supplied transform to self.
@@ -67,30 +84,32 @@ class Transform(object):
         if not isinstance(Q, type(self)):
             raise ValueError('Supplied value must be a Transform instance.')
 
-        m11 = self.M[0]*Q.M[0] + self.M[2]*Q.M[1]
-        m12 = self.M[1]*Q.M[0] + self.M[3]*Q.M[1]
+        m11 = self[0]*Q[0] + self[2]*Q[1]
+        m12 = self[1]*Q[0] + self[3]*Q[1]
 
-        m21 = self.M[0]*Q.M[2] + self.M[2]*Q.M[3]
-        m22 = self.M[1]*Q.M[2] + self.M[3]*Q.M[3]
+        m21 = self[0]*Q[2] + self[2]*Q[3]
+        m22 = self[1]*Q[2] + self[3]*Q[3]
 
-        m13 = self.M[0]*Q.M[4] + self.M[2]*Q.M[5] + self.M[4]
-        m23 = self.M[1]*Q.M[4] + self.M[3]*Q.M[5] + self.M[5]
+        m13 = self[0]*Q[4] + self[2]*Q[5] + self[4]
+        m23 = self[1]*Q[4] + self[3]*Q[5] + self[5]
 
-        self.M = [m11, m12, m21, m22, m13, m23]
+        for k, v in enumerate([m11, m12, m21, m22, m13, m23]):
+            self[k] = v
 
     def invert(self):
         """Invert self.
         """
-        d = 1 / (self._m[0]*self._m[3] - self._m[1]*self._m[2])
+        d = 1. / (self[0]*self[3] - self[1]*self[2])
 
-        m11 = self._m[3]*d
-        m12 = -self._m[1]*d
-        m21 = -self._m[2]*d
-        m22 = self._m[0]*d
-        m13 = d*(self._m[2]*self._m[5] - self._m[3]*self._m[4])
-        m23 = d*(self._m[1]*self._m[4] - self._m[0]*self._m[5])
+        m11 =  self[3]*d
+        m12 = -self[1]*d
+        m21 = -self[2]*d
+        m22 =  self[0]*d
+        m13 = d*(self[2]*self[5] - self[3]*self[4])
+        m23 = d*(self[1]*self[4] - self[0]*self[5])
 
-        self.M = [m11, m12, m21, m22, m13, m23]
+        for k, v in enumerate([m11, m12, m21, m22, m13, m23]):
+            self[k] = v
 
     def rotate(self, rad):
         """Apply rotation to self.
@@ -98,33 +117,35 @@ class Transform(object):
         c = math.cos(rad)
         s = math.sin(rad)
 
-        m11 = self._m[0]*c + self._m[2]*s
-        m12 = self._m[1]*c + self._m[3]*s
-        m21 = -self._m[0]*s + self._m[2]*c
-        m22 = -self._m[1]*s + self._m[3]*c
-        m13 = self.M[4]
-        m23 = self.M[5]
+        m11 =  self[0]*c + self[2]*s
+        m12 =  self[1]*c + self[3]*s
+        m21 = -self[0]*s + self[2]*c
+        m22 = -self[1]*s + self[3]*c
 
-        self.M = [m11, m12, m21, m22, m13, m23]
+        for k, v in enumerate([m11, m12, m21, m22]):
+            self[k] = v
 
     def translate(self, dx, dy):
         """Apply X,Y offsets to self.
         """
-        self._m[4] += self.M[0]*dx + self.M[2]*dy
-        self._m[5] += self.M[1]*dx + self.M[3]*dy
+        self[4] += self[0]*dx + self[2]*dy
+        self[5] += self[1]*dx + self[3]*dy
 
-    def scale(self, sx, sy):
+    def scale(self, sx, sy=None):
         """Apply X,Y scale factors to self.
         """
-        self._m[0] *= sx
-        self._m[1] *= sx
-        self._m[2] *= sy
-        self._m[3] *= sy
+        if not sy:
+            sy = sx
+
+        self[0] *= sx
+        self[1] *= sx
+        self[2] *= sy
+        self[3] *= sy
 
     def transform_point(self, px, py):
         """Apply own transform to supplied X,Y data point.
         """
-        qx = px*self.M[0] + py*self.M[2] + self.M[4]
-        qy = px*self.M[1] + py*self.M[3] + self.M[5]
+        qx = px*self.values[0] + py*self.values[2] + self.values[4]
+        qy = px*self.values[1] + py*self.values[3] + self.values[5]
 
         return qx, qy
