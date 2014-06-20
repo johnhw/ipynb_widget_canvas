@@ -144,3 +144,5 @@ def display(image):
     for w in mod_hbox:
         w.remove_class('vbox')
         w.add_class('hbox')
+
+    return wid_image

@@ -102,8 +102,19 @@ require(["widgets/js/widget"], function (WidgetManager) {
             console.log('update_transformation');
 
             // Apply new transformation.
+            // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#transformations
             var M = this.model.get('transformation');
-            console.log(M);
+            // console.log('M: ', M);
+
+            var a, b, c, d, e, f;
+            a = M[0]
+            b = M[1]
+            c = M[2]
+            d = M[3]
+            e = M[4]
+            f = M[5]
+            console.log(a, b, c, d, e, f);
+
         },
 
         /////////////////////////////////////////////
