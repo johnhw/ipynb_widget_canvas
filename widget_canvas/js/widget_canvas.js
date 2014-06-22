@@ -106,15 +106,23 @@ require(["widgets/js/widget"], function (WidgetManager) {
             var M = this.model.get('transformation');
             // console.log('M: ', M);
 
-            var a, b, c, d, e, f;
-            a = M[0]
-            b = M[1]
-            c = M[2]
-            d = M[3]
-            e = M[4]
-            f = M[5]
-            console.log(a, b, c, d, e, f);
+            // M = [m11, m12, m21, m22, m13, m23]
+            var m11, m12, m21, m22, m13, m23;
+            m11 = M[0]
+            m12 = M[1]
+            m21 = M[2]
+            m22 = M[3]
+            m13 = M[4]
+            m23 = M[5]
 
+            console.log(m11, m12, m21, m22, m13, m23);
+            console.log(this.context);
+
+            this.context.setTransform(m11, m12, m21, m22, m13, m23);
+            this.draw(this.image);
+
+            // Must call this.touch() after any modifications to Backbone Model data.
+            this.touch();
         },
 
         /////////////////////////////////////////////
