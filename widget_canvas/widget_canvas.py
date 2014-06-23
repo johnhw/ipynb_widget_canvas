@@ -55,9 +55,11 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
     # Image data source.
     src = IPython.utils.traitlets.Unicode(sync=True)
 
-    # Canvas dimensions.
-    _width = IPython.utils.traitlets.CFloat(sync=True)
-    _height = IPython.utils.traitlets.CFloat(sync=True)
+    # Width and height of canvas as rendered by the browser.  Size units are 'CSS Pixels'.  This is
+    # analagous to a portal or window.  These parameters default to the image inhenrent width and
+    # height.
+    css_width = IPython.utils.traitlets.CFloat(sync=True)
+    css_height = IPython.utils.traitlets.CFloat(sync=True)
 
     # Image transformation.
     transformation = IPython.utils.traitlets.List(sync=True)
@@ -65,7 +67,7 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
     # Mouse and keyboard event information.
     _mouse = IPython.utils.traitlets.Dict(sync=True)
 
-    def __init__(self, src='', width=None, height=None, **kwargs):
+    def __init__(self, src='', **kwargs):
         """
         Instantiate a new CanvasWidget object.
         """
@@ -74,12 +76,6 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         # Store supplied init data in traitlet(s).
         if src:
             self.src = src
-
-        if height:
-            self._height = height
-
-        if width:
-            self._width = width
 
         # Setup internal Python handler for front-end mouse events synced through
         # the Traitlet self._mouse.
@@ -230,8 +226,8 @@ class ImageWidget(CanvasWidget):
             return
 
         # Image width and height.
-        self._height = data_image.shape[0]
-        self._width = data_image.shape[1]
+        self.css_height = data_image.shape[0]
+        self.css_width = data_image.shape[1]
 
         # Compress and encode input image data.  Store the result in baseclass' src traitlet for
         # syncing with front-end.

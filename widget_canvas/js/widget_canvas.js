@@ -11,11 +11,11 @@ require(["widgets/js/widget"], function (WidgetManager) {
         initialize: function (options) {
             // console.log('initialize');
 
-            // Backbone model --> JavaScript
+            // Backbone Model --> My JavaScript View
             this.model.on('change:src', this.update_src, this);
             this.model.on('change:transformation', this.update_transformation, this);
-            // this.model.on('change:_height', this.update_height, this);
-            // this.model.on('change:_width', this.update_width, this);
+            this.model.on('change:css_height', this.update_css_height, this);
+            this.model.on('change:css_width', this.update_css_width, this);
 
             CanvasView.__super__.initialize.apply(this, arguments);
         },
@@ -68,33 +68,49 @@ require(["widgets/js/widget"], function (WidgetManager) {
         },
 
         update_src: function () {
-            // Model's `src`: Python --> JavaScript
-            // console.log('update_src');
+            // Python --> JavaScript
 
             // Copy image src from Backbone model to internal <img> element.
             this.image.src = this.model.get('src');
         },
 
-        draw: function (image, xfrm) {
+        update_css_width: function () {
+            // Python --> JavaScript
+
+            // Copy image src from Backbone model to internal <img> element.
+            this.canvas.style.width = this.model.get('css_width') + 'px'
+        },
+
+        update_css_height: function () {
+            // Python --> JavaScript
+
+            // Copy image src from Backbone model to internal <img> element.
+            this.canvas.style.height = this.model.get('css_height') + 'px'
+        },
+
+        draw: function (image) {
             // Draw image data from internal <img> to the <canvas>.
             // console.log('draw');
 
             var value
             value = image.height
             this.canvas.height = value
-            this.canvas.style.height = value + 'px'
-            this.model.set('_height', value);
+            // this.canvas.style.height = value + 'px'
+            // this.model.set('_height', value);
 
             value = image.width
             this.canvas.width = value
-            this.canvas.style.width = value + 'px'
-            this.model.set('_width', value);
+            // this.canvas.style.width = value + 'px'
+            // this.model.set('_width', value);
 
-            // Draw image to screen and apply transform.
+            // Apply transform.
+            this.context.setTransform(1, 0, 0, 1.5, 0, 0);
+
+            // Draw image to screen.
             this.context.drawImage(image, 0, 0);
 
             // Must call this.touch() after any modifications to Backbone Model data.
-            this.touch();
+            // this.touch();
         },
 
         update_transformation: function () {
@@ -103,8 +119,8 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
             // Apply new transformation.
             // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#transformations
+            // https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Canvas_tutorial/Transformations
             var M = this.model.get('transformation');
-            // console.log('M: ', M);
 
             // M = [m11, m12, m21, m22, m13, m23]
             var m11, m12, m21, m22, m13, m23;
