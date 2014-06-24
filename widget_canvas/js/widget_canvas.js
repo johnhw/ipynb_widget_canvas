@@ -9,20 +9,20 @@ require(["widgets/js/widget"], function (WidgetManager) {
     // Define the widget's View.
     var CanvasView = IPython.DOMWidgetView.extend({
         initialize: function (options) {
-            // console.log('initialize');
+            console.log('initialize');
 
             // Backbone Model --> My JavaScript View
             this.model.on('change:src', this.update_src, this);
+            this.model.on('change:width', this.update_width, this);
+            this.model.on('change:height', this.update_height, this);
             this.model.on('change:transformation', this.update_transformation, this);
-            this.model.on('change:css_height', this.update_css_height, this);
-            this.model.on('change:css_width', this.update_css_width, this);
 
             CanvasView.__super__.initialize.apply(this, arguments);
         },
 
         render: function () {
             // Render a widget's view instance to the DOM.
-            // console.log('render');
+            console.log('render');
 
             // This project's view is quite simple: just a single <canvas> element.
             // http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
@@ -48,17 +48,25 @@ require(["widgets/js/widget"], function (WidgetManager) {
             this.image = new Image();
 
             // Event handle for loading new data into the image element.
+            // var that = this
             var that = this
-            var draw_image_onload = function () {
-                that.draw(that.image);
+            var draw_onload = function () {
+                console.log('draw_onload');
+                that.draw();
             }
 
-            this.image.onload = draw_image_onload
+            this.image.onload = draw_onload
 
-            // Draw content to the canvas if valid image data exists in the Backbone model.
-            if (this.model.has('src')) {
-                if (this.model.get('src') != '') {
-                    this.update_src();
+            // Force draw function call if valid image data currently exists in the internal <img>
+            // element.
+            if (this.image.width != 0 && this.image.height != 0) {
+                draw_onload();
+            } else {
+                // Copy over src data if it exists in model.
+                if (this.model.has('src')) {
+                    if (this.model.get('src') != '') {
+                        this.update_src();
+                    }
                 }
             }
 
@@ -68,46 +76,65 @@ require(["widgets/js/widget"], function (WidgetManager) {
         },
 
         update_src: function () {
+            console.log('update_src');
             // Python --> JavaScript
+            // Copy new value from Backbone model, apply to this View.
 
-            // Copy image src from Backbone model to internal <img> element.
             this.image.src = this.model.get('src');
+
+            // this.draw() is called automatically and asynchronously via event handler installed
+            // in this.render().
         },
 
-        update_css_width: function () {
+        update_width: function () {
+            console.log('update_width');
             // Python --> JavaScript
+            // Copy new value from Backbone model, apply to this View.
 
-            // Copy image src from Backbone model to internal <img> element.
-            this.canvas.style.width = this.model.get('css_width') + 'px'
-        },
+            // value = image.width
+            var value = this.model.get('width');
+            console.log(value);
 
-        update_css_height: function () {
-            // Python --> JavaScript
-
-            // Copy image src from Backbone model to internal <img> element.
-            this.canvas.style.height = this.model.get('css_height') + 'px'
-        },
-
-        draw: function (image) {
-            // Draw image data from internal <img> to the <canvas>.
-            // console.log('draw');
-
-            var value
-            value = image.height
-            this.canvas.height = value
-            // this.canvas.style.height = value + 'px'
-            // this.model.set('_height', value);
-
-            value = image.width
             this.canvas.width = value
-            // this.canvas.style.width = value + 'px'
-            // this.model.set('_width', value);
+            this.canvas.style.width = value + 'px'
+
+            this.draw();
+        },
+
+        update_height: function () {
+            console.log('update_height');
+            // Python --> JavaScript
+            // Copy new value from Backbone model, apply to this View.
+
+            // value = image.height
+            var value = this.model.get('height');
+            console.log(value);
+
+            this.canvas.height = value
+            this.canvas.style.height = value + 'px'
+
+            this.draw();
+        },
+
+        draw: function () {
+            // Draw image data from internal <img> to the <canvas>.
+            console.log('draw');
+
+            var value = this.model.get('width');
+            console.log(value);
+            this.canvas.width = value
+            this.canvas.style.width = value + 'px'
+
+            var value = this.model.get('height');
+            console.log(value);
+            this.canvas.height = value
+            this.canvas.style.height = value + 'px'
 
             // Apply transform.
-            this.context.setTransform(1, 0, 0, 1.5, 0, 0);
+            // this.context.setTransform(1, 0, 0, 1.5, 0, 0);
 
             // Draw image to screen.
-            this.context.drawImage(image, 0, 0);
+            this.context.drawImage(this.image, 0, 0);
 
             // Must call this.touch() after any modifications to Backbone Model data.
             // this.touch();

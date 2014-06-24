@@ -55,11 +55,11 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
     # Image data source.
     src = IPython.utils.traitlets.Unicode(sync=True)
 
-    # Width and height of canvas as rendered by the browser.  Size units are 'CSS Pixels'.  This is
-    # analagous to a portal or window.  These parameters default to the image inhenrent width and
-    # height.
-    css_width = IPython.utils.traitlets.CFloat(sync=True)
-    css_height = IPython.utils.traitlets.CFloat(sync=True)
+    # Width and height of canvas as rendered by the browser.  Size units are 'CSS Pixels'. This is
+    # analagous to a portal or window.  These parameters default to the image's inherent width and
+    # height in data pixels.
+    width = IPython.utils.traitlets.CFloat(sync=True)
+    height = IPython.utils.traitlets.CFloat(sync=True)
 
     # Image transformation.
     transformation = IPython.utils.traitlets.List(sync=True)
@@ -72,10 +72,6 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         Instantiate a new CanvasWidget object.
         """
         super(CanvasWidget, self).__init__(**kwargs)
-
-        # Store supplied init data in traitlet(s).
-        if src:
-            self.src = src
 
         # Setup internal Python handler for front-end mouse events synced through
         # the Traitlet self._mouse.
@@ -92,6 +88,10 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         # Helper variables for mouse state.
         self._flag_mouse_down = False
         self._drag_origin = None
+
+        # Store supplied init data in traitlet(s).
+        if src:
+            self.src = src
 
     def display(self):
         """
@@ -206,12 +206,12 @@ class ImageWidget(CanvasWidget):
     If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
     min(data) -> 0 and max(data) -> 255.
     """
-    def __init__(self, data=None, **kwargs):
+    def __init__(self, data_image=None, **kwargs):
         """
         Instantiate a new CanvasImageWidget object.
         """
         super(ImageWidget, self).__init__(**kwargs)
-        self.image = data
+        self.image = data_image
 
     @property
     def image(self):
@@ -226,8 +226,8 @@ class ImageWidget(CanvasWidget):
             return
 
         # Image width and height.
-        self.css_height = data_image.shape[0]
-        self.css_width = data_image.shape[1]
+        self.height = data_image.shape[0]
+        self.width = data_image.shape[1]
 
         # Compress and encode input image data.  Store the result in baseclass' src traitlet for
         # syncing with front-end.
