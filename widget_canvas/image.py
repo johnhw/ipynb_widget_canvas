@@ -46,20 +46,20 @@ def png_xy(blob_str):
     return width, height
 
 
-def png_compress(data):
+def setup_data(data):
     """
-    Convert input image data array into a PNG compressed data representation.
+    Prepare input image data for compression.
 
     Valid data shapes:
         (rows, columns)    - Greyscale
         (rows, columns, 1) - Greyscale
         (rows, columns, 3) - RGB
-        (rows, columns, 4) - RGBA
+        (rows, columns, 4) - RGBA   note: Not valid for jpeg!!!!
 
-    If data type is not either np.uint8 or np.int16, then it will be converted by scaling
+    If data type is either np.uint8, then it will be converted by scaling
     min(data) -> 0 and max(data) -> 255.
 
-    Returns a string of compressed data.
+    Returns normalized data.
     """
 
     # Force data to be Numpy ndarray, if not already.
@@ -76,11 +76,10 @@ def png_compress(data):
     num_bands = data.shape[2]
 
     # Need to change type?
-    # if not (data.dtype == np.uint8 or data.dtype == np.uint16):
     if not (data.dtype == np.uint8):
         scale = data.max() - data.min()
         if scale == 0:
-            raise ValueError('scale is 0')
+            raise ValueError('Invalid scale range: {}'.format(scale))
 
         data = (data.astype(np.float32) - np.min(data)) / scale * 255
         data = data.astype(np.uint8)
@@ -95,16 +94,45 @@ def png_compress(data):
     else:
         raise ValueError('Incorrect number of bands.')
 
-    # Use Pillow to compress to PNG format.
+    return data, mode
+
+
+def compress(data, mode, fmt, **kwargs):
+    """
+    Convert input image data array into a PNG compressed data representation.
+
+    Valid data shapes:
+        (rows, columns)    - Greyscale
+        (rows, columns, 1) - Greyscale
+        (rows, columns, 3) - RGB
+        (rows, columns, 4) - RGBA
+
+    valid modes: L, RGB, RGBA
+
+    fmt: png, jpeg
+
+    if fmt is jpeg, then alpha channel will be ignored.
+
+    Returns a string of compressed data.
+    """
+
+    if fmt.lower() == 'jpeg':
+        if mode.upper() == 'RGBA':
+            # Ignore alpha channel.
+            data = data[:, :, :3]
+            mode = 'RGB'
+
+    # Convert data to PIL image.
     # http://pillow.readthedocs.org/en/latest/reference/Image.html#PIL.Image.fromarray
     img = PIL.Image.fromarray(data, mode)
 
     # http://pillow.readthedocs.org/en/latest/reference/Image.html#PIL.Image.Image.save
-    # http://pillow.readthedocs.org/en/latest/handbook/image-file-formats.html?highlight=png#png
-    buf = StringIO.StringIO()
-    img.save(buf, format='png', optimize=False)
-    results = buf.getvalue()
+    # http://pillow.readthedocs.org/en/latest/handbook/image-file-formats.html#png
+    # http://pillow.readthedocs.org/en/latest/handbook/image-file-formats.html#jpeg
 
-    fmt = 'png'
+    # Use Pillow to compress to specified format.
+    buf = StringIO.StringIO()
+    img.save(buf, format=fmt, **kwargs)  # optimize=False,
+    results = buf.getvalue()
 
     return results, fmt
