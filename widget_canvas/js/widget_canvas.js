@@ -7,17 +7,17 @@ require(["widgets/js/widget"], function (WidgetManager) {
     // console.log('require widget_canvas.js');
 
     // Define the widget's View.
-    var CanvasView = IPython.DOMWidgetView.extend({
+    var CanvasImageView = IPython.DOMWidgetView.extend({
         initialize: function (options) {
             console.log('initialize');
 
             // Backbone Model --> My JavaScript View
-            this.model.on('change:src', this.update_src, this);
+            this.model.on('change:data_encode', this.update_data_encode, this);
             // this.model.on('change:width', this.update_width, this);
             // this.model.on('change:height', this.update_height, this);
             this.model.on('change:transformation', this.update_transformation, this);
 
-            CanvasView.__super__.initialize.apply(this, arguments);
+            CanvasImageView.__super__.initialize.apply(this, arguments);
         },
 
         render: function () {
@@ -48,28 +48,20 @@ require(["widgets/js/widget"], function (WidgetManager) {
             this.image = new Image();
 
             // Event handling for drawing new data to the canvas.
-            // var that = this
             var that = this
             var draw_onload = function () {
                 console.log('draw_onload');
-                that.draw();
+                that.update_data_image();
             }
 
             this.image.onload = draw_onload
 
-            // Does any valid data exist in the system?
-            // console.log('render width, height: ', this.image.width, this.image.height);
-            if (this.image.width != 0 && this.image.height != 0) {
-                // Force a call to this.draw() if valid data exists in the internal <img> element.
-                draw_onload();
-            } else {
-                // Copy src data if it exists in model.
-                if (this.model.has('src')) {
-                    console.log('render has src');
-                    if (this.model.get('src') != '') {
-                        console.log('render has OK src');
-                        this.update_src();
-                    }
+            // Does any valid data exist in the system?  Copy data_b64 if it exists in model.
+            if (this.model.has('data_encode')) {
+                // console.log('render has b64');
+                if (this.model.get('data_encode') != '') {
+                    console.log('render has OK data_encode');
+                    this.update_data_encode();
                 }
             }
 
@@ -78,57 +70,55 @@ require(["widgets/js/widget"], function (WidgetManager) {
             this.update();
         },
 
-        update_src: function () {
-            console.log('update_src');
-            console.log('update_src A width, height: ', this.image.width, this.image.height);
-            // Python --> JavaScript
-            // Copy new value from Backbone model, apply to this View.
+        // update_fmt: function () {
+        //     // Python --> JavaScript
+        //     console.log('update_fmt: ' + this.model.get('fmt'));
+        // },
+        update_data_encode: function () {
+            // Python --> JavaScript, copy new value from Backbone model, apply to this View.
+            console.log('update_data_encode');
 
-            this.image.src = this.model.get('src');
-            console.log('update_src B width, height: ', this.image.width, this.image.height);
+            this.image.src = this.model.get('data_encode');
 
-            this.model.set('width', this.image.width);
-            this.model.set('height', this.image.height);
+            // Event processing continues inside this.image's defined onload() event handler.
+        },
 
-            // this.draw() is called automatically and asynchronously via event handler installed
-            // earlier in method this.render().
+        update_data_image: function () {
+            // Helper handler.
+            console.log('update_data_image');
+
+            this.set_width(this.image.width);
+            this.set_height(this.image.height);
+
+            this.draw();
         },
 
         update_width: function () {
             // Python --> JavaScript
-            // Copy new value from Backbone model, apply to this View.
-            var value = this.model.get('width');
+            console.log('update_width');
+            this.set_width(this.model.get('width'));
+            this.draw();
+        },
+        update_height: function () {
+            // Python --> JavaScript
+            console.log('update_height');
+            this.set_height(this.model.get('height'));
+            this.draw();
+        },
+
+        set_width: function (value) {
+            console.log('set_width');
             this.canvas.width = value
             this.canvas.style.width = value + 'px'
         },
-
-        update_height: function () {
-            // Python --> JavaScript
-            // Copy new value from Backbone model, apply to this View.
-            var value = this.model.get('height');
+        set_height: function (value) {
+            console.log('set_height');
             this.canvas.height = value
             this.canvas.style.height = value + 'px'
         },
 
-        draw: function () {
-            // Draw image data from internal <img> to the <canvas>.
-            console.log('draw');
-
-            this.update_width();
-            this.update_height();
-
-            // Apply transform.
-            // this.context.setTransform(1, 0, 0, 1.5, 0, 0);
-
-            // Draw image to screen.
-            this.context.drawImage(this.image, 0, 0);
-
-            // Must call this.touch() after any modifications to Backbone Model data.
-            // this.touch();
-        },
-
         update_transformation: function () {
-            // Model's `transformation`: Python --> JavaScript
+            // Python --> JavaScript
             console.log('update_transformation');
 
             // Apply new transformation.
@@ -145,14 +135,28 @@ require(["widgets/js/widget"], function (WidgetManager) {
             m13 = M[4]
             m23 = M[5]
 
-            console.log(m11, m12, m21, m22, m13, m23);
-            console.log(this.context);
-
+            // console.log(m11, m12, m21, m22, m13, m23);
+            // console.log(this.context);
             this.context.setTransform(m11, m12, m21, m22, m13, m23);
-            this.draw(this.image);
+
+            this.draw();
 
             // Must call this.touch() after any modifications to Backbone Model data.
-            this.touch();
+            // this.touch();
+        },
+
+        draw: function () {
+            // Draw image data from internal <img> to the <canvas>.
+            console.log('draw');
+
+            // Apply transform.
+            // this.context.setTransform(1, 0, 0, 1.5, 0, 0);
+
+            // Draw image to screen.
+            this.context.drawImage(this.image, 0, 0);
+
+            // Must call this.touch() after any modifications to Backbone Model data.
+            // this.touch();
         },
 
         /////////////////////////////////////////////
@@ -246,6 +250,6 @@ require(["widgets/js/widget"], function (WidgetManager) {
     });
 
     // Register View with widget manager.
-    // console.log('register');
-    WidgetManager.register_widget_view('CanvasView', CanvasView);
+    console.log('register');
+    WidgetManager.register_widget_view('CanvasImageView', CanvasImageView);
 });

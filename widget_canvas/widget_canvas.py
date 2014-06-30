@@ -46,14 +46,23 @@ def _bootstrap_js():
 #################################################
 
 
-class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
+class ImageWidget(IPython.html.widgets.widget.DOMWidget):
     """
-    Interface to the HTML Canvas Element using IPython Notebook widget system.
+    Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
+    supplied, must be a Numpy array (or equivalent) with a shape similar to one of the following:
+        (rows, columns)    - Greyscale
+        (rows, columns, 1) - Greyscale
+        (rows, columns, 3) - RGB
+        (rows, columns, 4) - RGBA
+
+    If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
+    min(data) -> 0 and max(data) -> 255.
     """
-    _view_name = IPython.utils.traitlets.Unicode('CanvasView', sync=True)
+
+    _view_name = IPython.utils.traitlets.Unicode('CanvasImageView', sync=True)
 
     # Image data source.
-    src = IPython.utils.traitlets.Unicode(sync=True)
+    data_encode = IPython.utils.traitlets.Unicode(sync=True)
 
     # Width and height of canvas as rendered by the browser.  Size units are 'CSS Pixels'. This is
     # analagous to a portal or window.  These parameters default to the image's inherent width and
@@ -67,11 +76,22 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
     # Mouse and keyboard event information.
     _mouse = IPython.utils.traitlets.Dict(sync=True)
 
-    def __init__(self, src='', **kwargs):
+    def __init__(self, data_image=None, fmt='webp', **kwargs):
         """
-        Instantiate a new CanvasWidget object.
+        Instantiate a new CanvasImageWidget object.
+
+        Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
+        supplied, must be a Numpy array (or equivalent) with a shape similar to one of the
+        following:
+            (rows, columns)    - Greyscale
+            (rows, columns, 1) - Greyscale
+            (rows, columns, 3) - RGB
+            (rows, columns, 4) - RGBA
+
+        If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
+        min(data) -> 0 and max(data) -> 255.
         """
-        super(CanvasWidget, self).__init__(**kwargs)
+        super(ImageWidget, self).__init__(**kwargs)
 
         # Setup internal Python handler for front-end mouse events synced through
         # the Traitlet self._mouse.
@@ -90,8 +110,40 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         self._drag_origin = None
 
         # Store supplied init data in traitlet(s).
-        if src:
-            self.src = src
+        self.fmt = fmt
+        if data_image:
+            self.image = data_image
+
+    def __repr__(self):
+        val = """Size: {:d} bytes\nFormat: {:s}
+        """.format(len(self.data_encode), self.fmt)
+
+        return val
+
+    @property
+    def image(self):
+        return self._image
+
+    @image.setter
+    def image(self, data_image):
+        # Store the image data for later use.
+        self._image = data_image
+
+        if data_image is None:
+            return
+
+        # Image width and height.
+        self.height = data_image.shape[0]
+        self.width = data_image.shape[1]
+
+        # Compress input image data and encode via Base64.
+        quality = 75
+        data_comp, fmt = image.compress(data_image, fmt=self.fmt, quality=quality)
+
+        data_b64 = base64.b64encode(data_comp)
+        data_encode = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
+
+        self.data_encode = data_encode
 
     def display(self):
         """
@@ -189,56 +241,6 @@ class CanvasWidget(IPython.html.widgets.widget.DOMWidget):
         """Repond to mouse wheel scroll event.
         """
         self._mouse_wheel_dispatcher.register_callback(callback, remove=remove)
-
-
-class ImageWidget(CanvasWidget):
-    """
-    Display and manipulate images using HTML5 Canvas with IPython Notebook widget system.
-    This class builds upon CanvasWidget making it easier to work with images.
-
-    Input image data, if supplied, must be a Numpy array (or equivalent) with a shape similar to
-    one of the following:
-        (rows, columns)    - Greyscale
-        (rows, columns, 1) - Greyscale
-        (rows, columns, 3) - RGB
-        (rows, columns, 4) - RGBA
-
-    If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
-    min(data) -> 0 and max(data) -> 255.
-    """
-    def __init__(self, data_image=None, **kwargs):
-        """
-        Instantiate a new CanvasImageWidget object.
-        """
-        super(ImageWidget, self).__init__(**kwargs)
-        self.image = data_image
-
-    @property
-    def image(self):
-        return self._image
-
-    @image.setter
-    def image(self, data_image):
-        # Store the image data for later use.
-        self._image = data_image
-
-        if data_image is None:
-            return
-
-        # Image width and height.
-        self.height = data_image.shape[0]
-        self.width = data_image.shape[1]
-
-        # Compress and encode input image data.  Store the result in baseclass' src traitlet for
-        # syncing with front-end.
-        data_comp, fmt = image.png_compress(data_image)
-
-        # Encode via base64.
-        data_b64 = base64.b64encode(data_comp)
-
-        # Build src string and put it into Traitlet for synchronizing with front-end.
-        self.src = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
-
 
 #################################################
 

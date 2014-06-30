@@ -46,6 +46,28 @@ def png_xy(blob_str):
     return width, height
 
 
+def determine_mode(data):
+    """
+    Determine color mode.
+    """
+
+    # Force data to be Numpy ndarray, if not already.
+    data = np.asarray(data)
+
+    num_bands = data.shape[2]
+
+    if num_bands == 1:
+        mode = 'L'
+    elif num_bands == 3:
+        mode = 'RGB'
+    elif num_bands == 4:
+        mode = 'RGBA'
+    else:
+        raise ValueError('Incorrect number of bands.')
+
+    return mode
+
+
 def setup_data(data):
     """
     Prepare input image data for compression.
@@ -73,8 +95,6 @@ def setup_data(data):
     if data.ndim == 2:
         data.shape = num_lines, num_samples, 1
 
-    num_bands = data.shape[2]
-
     # Need to change type?
     if not (data.dtype == np.uint8):
         scale = data.max() - data.min()
@@ -84,20 +104,10 @@ def setup_data(data):
         data = (data.astype(np.float32) - np.min(data)) / scale * 255
         data = data.astype(np.uint8)
 
-    # Number of bands.
-    if num_bands == 1:
-        mode = 'L'
-    elif num_bands == 3:
-        mode = 'RGB'
-    elif num_bands == 4:
-        mode = 'RGBA'
-    else:
-        raise ValueError('Incorrect number of bands.')
-
-    return data, mode
+    return data
 
 
-def compress(data, mode, fmt, **kwargs):
+def compress(data, mode=None, fmt=None, **kwargs):
     """
     Convert input image data array into a PNG compressed data representation.
 
@@ -116,7 +126,14 @@ def compress(data, mode, fmt, **kwargs):
     Returns a string of compressed data.
     """
 
-    if fmt.lower() == 'jpeg':
+    # Default values.
+    if not mode:
+        mode = determine_mode(data)
+
+    if not fmt:
+        fmt = 'PNG'
+
+    if fmt.upper() == 'JPEG' or fmt.upper() == 'JPG':
         if mode.upper() == 'RGBA':
             # Ignore alpha channel.
             data = data[:, :, :3]
@@ -133,6 +150,6 @@ def compress(data, mode, fmt, **kwargs):
     # Use Pillow to compress to specified format.
     buf = StringIO.StringIO()
     img.save(buf, format=fmt, **kwargs)  # optimize=False,
-    results = buf.getvalue()
+    data_comp = buf.getvalue()
 
-    return results, fmt
+    return data_comp, fmt
