@@ -9,7 +9,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
     // Define the widget's View.
     var CanvasImageView = IPython.DOMWidgetView.extend({
         initialize: function (options) {
-            console.log('initialize');
+            // console.log('initialize');
 
             // Backbone Model --> My JavaScript View
             this.model.on('change:data_encode', this.update_data_encode, this);
@@ -50,7 +50,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
             // Event handling for drawing new data to the canvas.
             var that = this
             var draw_onload = function () {
-                console.log('draw_onload');
+                // console.log('draw_onload');
                 that.update_data_image();
             }
 
@@ -60,7 +60,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
             if (this.model.has('data_encode')) {
                 // console.log('render has b64');
                 if (this.model.get('data_encode') != '') {
-                    console.log('render has OK data_encode');
+                    // console.log('render has OK data_encode');
                     this.update_data_encode();
                 }
             }
@@ -76,7 +76,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
         // },
         update_data_encode: function () {
             // Python --> JavaScript, copy new value from Backbone model, apply to this View.
-            console.log('update_data_encode');
+            // console.log('update_data_encode');
 
             this.image.src = this.model.get('data_encode');
 
@@ -85,7 +85,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
         update_data_image: function () {
             // Helper handler.
-            console.log('update_data_image');
+            // console.log('update_data_image');
 
             this.set_width(this.image.width);
             this.set_height(this.image.height);
@@ -95,26 +95,34 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
         update_width: function () {
             // Python --> JavaScript
-            console.log('update_width');
+            // console.log('update_width');
             this.set_width(this.model.get('width'));
             this.draw();
         },
         update_height: function () {
             // Python --> JavaScript
-            console.log('update_height');
+            // console.log('update_height');
             this.set_height(this.model.get('height'));
             this.draw();
         },
 
         set_width: function (value) {
-            console.log('set_width');
+            // console.log('set_width: ', value);
+
             this.canvas.width = value
             this.canvas.style.width = value + 'px'
+
+            this.model.set('width', value);
+            this.touch();
         },
         set_height: function (value) {
-            console.log('set_height');
+            // console.log('set_height: ', value);
+
             this.canvas.height = value
             this.canvas.style.height = value + 'px'
+
+            this.model.set('height', value);
+            this.touch()
         },
 
         update_transformation: function () {

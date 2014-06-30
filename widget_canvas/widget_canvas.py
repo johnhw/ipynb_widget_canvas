@@ -111,7 +111,7 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
 
         # Store supplied init data in traitlet(s).
         self.fmt = fmt
-        if data_image:
+        if data_image is not None:
             self.image = data_image
 
     def __repr__(self):
@@ -133,8 +133,8 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
             return
 
         # Image width and height.
-        self.height = data_image.shape[0]
-        self.width = data_image.shape[1]
+        # self.height = data_image.shape[0]
+        # self.width = data_image.shape[1]
 
         # Compress input image data and encode via Base64.
         quality = 75
