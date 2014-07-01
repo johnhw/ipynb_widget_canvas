@@ -1,12 +1,13 @@
 
 from __future__ import division, print_function, unicode_literals
 
+import math
+
 """
 This is a simple class for keeping track of the current transformation matrix.
 self.Python implementation was inspired by the JavaScript implementation
 by Simon Sarris: https://github.com/simonsarris/Canvas-tutorials/blob/master/transform.js
 """
-import math
 
 
 class Transform(object):
@@ -87,11 +88,13 @@ class Transform(object):
         """
         self.m11, self.m12, self.m13, self.m12, self.m22, self.m23 = 1, 0, 0, 0, 1, 0
 
+    def copy(self):
+        """Return independent copy of self.
+        """
     #############################################
 
     def multiply(self, Q):
-        """Apply supplied transform to self.
-        M = [m11, m12, m21, m22, m13, m23]
+        """Apply supplied transform to copy of self.
         """
         if not isinstance(Q, type(self)):
             raise ValueError('Supplied value must be a Transform instance.')
@@ -114,8 +117,6 @@ class Transform(object):
 
     def invert(self):
         """Invert self.
-        M = [m11, m12, m21, m22, m13, m23]
-              0    1    2    3    4    5
         """
         d = 1. / (self.m11*self.m22 - self.m12*self.m21)
 
@@ -134,9 +135,7 @@ class Transform(object):
         self.m23 = m23
 
     def rotate(self, rad):
-        """Apply rotation to self.
-        M = [m11, m12, m21, m22, m13, m23]
-              0    1    2    3    4    5
+        """Rotate self about origin.
         """
         c = math.cos(rad)
         s = math.sin(rad)
@@ -154,18 +153,13 @@ class Transform(object):
 #         self.m23 = m23
 
     def translate(self, dx, dy):
-        """Apply X,Y offsets to self.
-        M = [m11, m12, m21, m22, m13, m23]
-              0    1    2    3    4    5
+        """Offset self.
         """
         self.m13 += self.m11*dx + self.m21*dy
         self.m23 += self.m12*dx + self.m22*dy
 
     def scale(self, sx, sy=None):
-        """
-        Apply X,Y scale factors to self.
-        M = [m11, m12, m21, m22, m13, m23]
-              0    1    2    3    4    5
+        """Scale self.
         """
         if not sy:
             sy = sx
@@ -177,11 +171,13 @@ class Transform(object):
 
     def transform_point(self, px, py=None):
         """Apply own transform to supplied X,Y data point.
+
         M = [m11, m12, m21, m22, m13, m23]
               0    1    2    3    4    5
         """
         if not py:
             px, py = px
+
         qx = px*self.m11 + py*self.m21 + self.m13
         qy = px*self.m12 + py*self.m22 + self.m23
 

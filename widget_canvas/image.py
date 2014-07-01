@@ -2,7 +2,6 @@
 from __future__ import division, print_function, unicode_literals
 
 import StringIO
-import base64
 import struct
 
 import PIL
@@ -10,13 +9,14 @@ import PIL.Image
 import numpy as np
 
 """
-This module contains helper fnctions for working with image data.
+This module contains helper functions for working with image data.
+
+Reading and writing image data using PIL or Pillow.  Image data is processed to/from Numpy
+arrays.  Output file format is determined solely from user-supplied filename's extension.  No
+fancy data processing of any kind!!
 """
 
 
-# Reading and writing image data using PIL or Pillow.  Image data is
-# processed to/from Numpy arrays.  Output file format is determined solely from user-supplied
-# filename's extension.  No fancy data processing of any kind!!
 def read(fname):
     """Read image file, return a Numpy array."""
     img = PIL.Image.open(fname)
@@ -48,7 +48,7 @@ def png_xy(blob_str):
 
 def determine_mode(data):
     """
-    Determine color mode.
+    Determine color mode.  Input data is expected to be 3D: [num_lines, num_samples, num_bands].
     """
 
     # Force data to be Numpy ndarray, if not already.
@@ -109,7 +109,7 @@ def setup_data(data):
 
 def compress(data, mode=None, fmt=None, **kwargs):
     """
-    Convert input image data array into a PNG compressed data representation.
+    Convert input image data array into a compressed data representation.
 
     Valid data shapes:
         (rows, columns)    - Greyscale
@@ -119,9 +119,9 @@ def compress(data, mode=None, fmt=None, **kwargs):
 
     valid modes: L, RGB, RGBA
 
-    fmt: png, jpeg
+    fmt: 'png', 'jpeg', etc.
 
-    if fmt is jpeg, then alpha channel will be ignored.
+    Alpha channel will be ignored if fmt == 'jpeg'.
 
     Returns a string of compressed data.
     """
