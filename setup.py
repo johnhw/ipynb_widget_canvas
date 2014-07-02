@@ -6,7 +6,8 @@ version = '0.0.1'
 
 setup(name='ipynb_widget_canvas',
       packages=find_packages(),
-      package_data={'': ['*.txt', '*.md', '*.py', '*.ipynb',  '*.jpg', '*.html', '*.js']},
+      package_data={'': ['*.txt', '*.md', '*.py', '*.ipynb',  '*.jpg', '*.png',
+                         '*.html', '*.js']},
 
       # Metadata
       version=version,

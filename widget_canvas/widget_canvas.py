@@ -43,7 +43,6 @@ def _bootstrap_js():
         IPython.display.display_javascript(js, raw=True)
 
 #################################################
-#################################################
 
 
 class ImageWidget(IPython.html.widgets.widget.DOMWidget):
@@ -132,18 +131,12 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
         if data_image is None:
             return
 
-        # Image width and height.
-        # self.height = data_image.shape[0]
-        # self.width = data_image.shape[1]
-
         # Compress input image data and encode via Base64.
-        quality = 75
+        quality = 75  # note: Q = 75 yields great results using WebP image codec.
         data_comp, fmt = image.compress(data_image, fmt=self.fmt, quality=quality)
 
         data_b64 = base64.b64encode(data_comp)
-        data_encode = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
-
-        self.data_encode = data_encode
+        self.data_encode = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
 
     def display(self):
         """
@@ -208,7 +201,7 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
     #######################################################
     # User-facing methods to register Python event handler functions.
     #
-    # The signature for each registration function is similar:
+    # The signature for each registration function follow a common theme:
     #   callback : function to be called with event information as argument.
     #   remove : bool (optional), set to true to unregister the callback function.
     #

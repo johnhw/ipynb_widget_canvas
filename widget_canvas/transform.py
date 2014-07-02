@@ -18,9 +18,10 @@ class Transform(object):
         """
         Create a new instance of a Transform.
         Defined by a sequence of six numbers from the elements
-        of the matrix [m11, m12, m13,
-                       m21, m22, m23,
-                       0.0, 0.0, 1.0]
+        of the matrix M = [m11, m12, m21, m22, m13, m23] that represent
+        a square matrix of the form: M = [m11, m12, m13,
+                                          m21, m22, m23,
+                                          0.0, 0.0, 1.0]
 
         These values are stored internally as a sequence in a form directly compatible with
         the HTML5 Canvas Element's Context method setTransform().  The internal flattened
@@ -88,16 +89,23 @@ class Transform(object):
         """
         self.m11, self.m12, self.m13, self.m12, self.m22, self.m23 = 1, 0, 0, 0, 1, 0
 
+        return self
+
     def copy(self):
         """Return independent copy of self.
         """
+        Q = Transform()
+        Q.values = self.values
+
+        return Q
+
     #############################################
 
-    def multiply(self, Q):
-        """Apply supplied transform to copy of self.
+    def _matrix_multiply(self, Q):
+        """Apply supplied transform(s) to copy of self.
         """
         if not isinstance(Q, type(self)):
-            raise ValueError('Supplied value must be a Transform instance.')
+            raise ValueError('Supplied value must be a Transform instance: {}'.format(Q))
 
         m11 = self.m11*Q.m11 + self.m21*Q.m12
         m12 = self.m12*Q.m11 + self.m22*Q.m12
@@ -108,12 +116,18 @@ class Transform(object):
         m13 = self.m11*Q.m13 + self.m21*Q.m23 + self.m13
         m23 = self.m12*Q.m13 + self.m22*Q.m23 + self.m23
 
-        self.m11 = m11
-        self.m12 = m12
-        self.m13 = m13
-        self.m21 = m21
-        self.m22 = m22
-        self.m23 = m23
+        P = Transform([m11, m12, m21, m22, m13, m23])
+
+        return P
+
+    def multiply(self, *args):
+        """Apply supplied transform(s) to copy of self.
+        """
+        P = self.copy()
+        for Q in args:
+            P = P._matrix_multiply(Q)
+
+        return P
 
     def invert(self):
         """Invert self.
@@ -134,6 +148,8 @@ class Transform(object):
         self.m22 = m22
         self.m23 = m23
 
+        return self
+
     def rotate(self, rad):
         """Rotate self about origin.
         """
@@ -152,14 +168,18 @@ class Transform(object):
         self.m22 = m22
 #         self.m23 = m23
 
+        return self
+
     def translate(self, dx, dy):
         """Offset self.
         """
-        self.m13 += self.m11*dx + self.m21*dy
-        self.m23 += self.m12*dx + self.m22*dy
+        self.m13 -= self.m11*dx + self.m21*dy
+        self.m23 -= self.m12*dx + self.m22*dy
+
+        return self
 
     def scale(self, sx, sy=None):
-        """Scale self.
+        """Apply X,Y scale factors to self.
         """
         if not sy:
             sy = sx
@@ -169,6 +189,8 @@ class Transform(object):
         self.m21 *= sy
         self.m22 *= sy
 
+        return self
+
     def transform_point(self, px, py=None):
         """Apply own transform to supplied X,Y data point.
 
@@ -177,7 +199,6 @@ class Transform(object):
         """
         if not py:
             px, py = px
-
         qx = px*self.m11 + py*self.m21 + self.m13
         qy = px*self.m12 + py*self.m22 + self.m23
 

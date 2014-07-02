@@ -153,12 +153,25 @@ require(["widgets/js/widget"], function (WidgetManager) {
             // this.touch();
         },
 
+        clear: function () {
+            // Clear the canvas while preserving current state.
+            // http://stackoverflow.com/a/6722031/282840
+            // console.log('clear: ', 0, 0, this.canvas.width, this.canvas.height);
+
+            this.context.save();
+
+            this.context.setTransform(1, 0, 0, 1, 0, 0);
+            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+            this.context.restore();
+        },
+
         draw: function () {
             // Draw image data from internal <img> to the <canvas>.
             console.log('draw');
 
-            // Apply transform.
-            // this.context.setTransform(1, 0, 0, 1.5, 0, 0);
+            // Clear any prior image.
+            this.clear();
 
             // Draw image to screen.
             this.context.drawImage(this.image, 0, 0);

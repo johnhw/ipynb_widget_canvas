@@ -3,35 +3,21 @@
 
 ## Motivation
 
-The HTML5 Canvas Element is a powerful tool for displaying resolution-dependent bitmap data.  It's
-great for efficiently rendering 2D graphics, images, artwork, or game components.  My current
-interest in the Canvas Element is as the foundation for an interactive image viewer
-within the IPython
-[Notebook](http://ipython.org/notebook.html) widget
-[framework](http://nbviewer.ipython.org/github/ipython/ipython/blob/2.x/examples/Interactive%20Widgets/Index.ipynb).
+The HTML5 Canvas Element is a powerful tool for displaying resolution-dependent bitmap data.  It's great for efficiently rendering 2D graphics, images, artwork, or game components.  My current interest in the Canvas Element is to use it as the foundation for an interactive image viewer within the IPython [Notebook](http://ipython.org/notebook.html) widget [framework](http://nbviewer.ipython.org/github/ipython/ipython/blob/2.x/examples/Interactive%20Widgets/Index.ipynb).
 
-I knew early on that I would need to learn a about JavaScript to make this project work. JavaScript
-is a really curious programming language, where the basic language itself is a wilderness of of
-bizarre constructs.  Navigating through that is risky without a solid, practical reference
-[book](https://play.google.com/store/books/details/Douglas_Crockford_JavaScript_The_Good_Parts?id=PXa2bby0oQ0C).
-So many great external libraries and design patterns have developed over
-the years such that most people today seem to enjoy working with the language.  I was still
-surprised, however, at how much I had to learn about the [RequireJS](http://requirejs.org/) and
-[BackboneJS](http://backbonejs.org/) libraries before I could make significant progress on the
-technical parts.  I also found it very satisfying when the [Module
-Pattern](http://javascriptplayground.com/blog/2012/04/javascript-module-pattern/) started making
-sense to me.
-
+I knew early on that I would need to learn a about JavaScript to make this project work. JavaScript is a really curious programming language, where the basic language itself is a wilderness of bizarre constructs.  Navigating through that is risky without a solid, practical reference [book](https://play.google.com/store/books/details/Douglas_Crockford_JavaScript_The_Good_Parts?id=PXa2bby0oQ0C). So many great external libraries and design patterns have developed over the years such that most people today seem to enjoy working with the language.  I was still surprised, however, at how much I had to learn about the [RequireJS](http://requirejs.org/) and [BackboneJS](http://backbonejs.org/) libraries before I could make significant progress on the technical parts.  I also found it very satisfying when the [Module Pattern](http://javascriptplayground.com/blog/2012/04/javascript-module-pattern/) started making sense to me.
 
 ## Design Thoughts
 
 - My immediate plans for the Canvas Widget are to implement the functionality required by my
   other quantitative image viewer project.  This includes:
+
   - Display an image via URL
   - Display an image from a Numpy array: gray scale, RGB, or RGBA
   - Support image zooming and panning via mouse
   - Accept user-defined callback functions to be called as response to mouse motion/click events
   - Support for user-defined signal- and image-processing functions on Python back-end
+
 
 - I want the basic framework to be generic such that adding support for other Canvas Element
   features in the future will be easy and fun.  Such features might include drawing geometric
