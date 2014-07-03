@@ -22,7 +22,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
         render: function () {
             // Render a widget's view instance to the DOM.
-            console.log('render');
+            // console.log('render');
 
             // This project's view is quite simple: just a single <canvas> element.
             // http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
@@ -127,7 +127,10 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
         update_transformation: function () {
             // Python --> JavaScript
-            console.log('update_transformation');
+            // console.log('update_transformation');
+            // console.log(this.model);
+            // console.log(this.model.msg_buffer);
+            // console.log(this.model.pending_msgs);
 
             // Apply new transformation.
             // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#transformations
@@ -168,9 +171,9 @@ require(["widgets/js/widget"], function (WidgetManager) {
 
         draw: function () {
             // Draw image data from internal <img> to the <canvas>.
-            console.log('draw');
+            // console.log('draw');
 
-            // Clear any prior image.
+            // Clear any prior image data.
             this.clear();
 
             // Draw image to screen.
@@ -271,6 +274,6 @@ require(["widgets/js/widget"], function (WidgetManager) {
     });
 
     // Register View with widget manager.
-    console.log('register');
+    // console.log('register');
     WidgetManager.register_widget_view('CanvasImageView', CanvasImageView);
 });

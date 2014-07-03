@@ -107,6 +107,7 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
         # Helper variables for mouse state.
         self._flag_mouse_down = False
         self._drag_origin = None
+        self.mouse_xy = None  # or maybe (-1, -1) ?
 
         # Store supplied init data in traitlet(s).
         self.fmt = fmt
@@ -151,6 +152,9 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
         """Python back-end handling of JavaScript front-end generated mouse events.
         """
 
+        # Update internal storage for mouse coordinates.
+        self.mouse_xy = event['canvasX'], event['canvasY']
+
         # Call all registered back-end event handlers with updated information.
         if event['type'] == 'mousemove':
             # The mouse has moved.
@@ -161,6 +165,8 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
                                       calling this function')
 
                 event['type'] = str('mousedrag')
+                event['drag_originX'] = self._drag_origin[0]
+                event['drag_originY'] = self._drag_origin[1]
                 event['dragX'] = event['canvasX'] - self._drag_origin[0]
                 event['dragY'] = event['canvasY'] - self._drag_origin[1]
 

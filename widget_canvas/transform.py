@@ -58,8 +58,8 @@ class Transform(object):
     def _repr_latex_(self):
         template = """
                 \\begin{{equation*}}
-                M = \\begin{{vmatrix}} {:6.2f} & {:6.2f} & {:6.2f} \\\\
-                                       {:6.2f} & {:6.2f} & {:6.2f} \\end{{vmatrix}}
+                M = \\begin{{vmatrix}} {:7.3f} & {:7.3f} & {:7.3f} \\\\
+                                       {:7.3f} & {:7.3f} & {:7.3f} \\end{{vmatrix}}
                 \\end{{equation*}}
                 """
 
@@ -141,12 +141,14 @@ class Transform(object):
         m13 = d*(self.m21*self.m23 - self.m22*self.m13)
         m23 = d*(self.m12*self.m13 - self.m11*self.m23)
 
-        self.m11 = m11
-        self.m12 = m12
-        self.m13 = m13
-        self.m21 = m21
-        self.m22 = m22
-        self.m23 = m23
+        # self.m11 = m11
+        # self.m12 = m12
+        # self.m13 = m13
+        # self.m21 = m21
+        # self.m22 = m22
+        # self.m23 = m23
+
+        self.values = m11, m12, m21, m22, m13, m23
 
         return self
 
@@ -170,14 +172,6 @@ class Transform(object):
 
         return self
 
-    def translate(self, dx, dy):
-        """Offset self.
-        """
-        self.m13 -= self.m11*dx + self.m21*dy
-        self.m23 -= self.m12*dx + self.m22*dy
-
-        return self
-
     def scale(self, sx, sy=None):
         """Apply X,Y scale factors to self.
         """
@@ -191,14 +185,29 @@ class Transform(object):
 
         return self
 
-    def transform_point(self, px, py=None):
+    def translate(self, dx, dy, update=True):
+        """Offset self.
+        """
+        m13 = self.m11*dx + self.m21*dy
+        m23 = self.m12*dx + self.m22*dy
+
+        if update:
+            self.m13 -= m13
+            self.m23 -= m23
+        else:
+            self.m13 = m13
+            self.m23 = m23
+
+        return self
+
+    def transform_point(self, px, py):
         """Apply own transform to supplied X,Y data point.
 
         M = [m11, m12, m21, m22, m13, m23]
               0    1    2    3    4    5
         """
-        if not py:
-            px, py = px
+        # if not py:
+        #     px, py = px
         qx = px*self.m11 + py*self.m21 + self.m13
         qy = px*self.m12 + py*self.m22 + self.m23
 
