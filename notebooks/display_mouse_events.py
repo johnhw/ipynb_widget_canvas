@@ -71,8 +71,7 @@ def display(image):
 
     def handle_motion(ev):
         wid_move.value = '<b>Move</b>'
-        X = ev['canvasX']
-        Y = ev['canvasY']
+        X, Y = ev['canvas_xy']
         wid_move_XY.value = 'XY: {:04.0f}, {:04.0f}'.format(X, Y)
 
         wid_drag.value = 'Drag'
@@ -81,8 +80,7 @@ def display(image):
     def handle_drag(ev):
         wid_move.value = 'Move'
         wid_drag.value = '<b>Drag</b>'
-        X = ev['dragX']
-        Y = ev['dragY']
+        X, Y = ev['drag_xy']
 
         wid_drag_XY.value = 'XY: {:04.0f}, {:04.0f}'.format(X, Y)
         wid_move_XY.value = 'XY:'

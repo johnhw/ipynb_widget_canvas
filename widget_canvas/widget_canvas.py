@@ -106,8 +106,12 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
 
         # Helper variables for mouse state.
         self._flag_mouse_down = False
-        self._drag_origin = None
-        self.mouse_xy = None  # or maybe (-1, -1) ?
+        self._drag_origin_xy = None
+        self._drag_xy = None        # distance from drag_origin
+        self._drag_delta_xy = None  # distance from position of previous mouse drag motion event
+        self._drag_prior_mouse_xy = 0, 0
+
+        self.mouse_xy = 0, 0
 
         # Store supplied init data in traitlet(s).
         self.fmt = fmt
@@ -154,21 +158,32 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
 
         # Update internal storage for mouse coordinates.
         self.mouse_xy = event['canvasX'], event['canvasY']
+        event['canvas_xy'] = self.mouse_xy
+        event.pop('canvasX', None)
+        event.pop('canvasY', None)
 
         # Call all registered back-end event handlers with updated information.
         if event['type'] == 'mousemove':
             # The mouse has moved.
             if self._flag_mouse_down:
                 # Mouse has moved with button down.  This is really a `mousedrag` event.
-                if not self._drag_origin:
+                if not self._drag_origin_xy:
                     raise ValueError('drag origin should have been defined prior to \
                                       calling this function')
 
+                self._drag_prior_mouse_xy = self._drag_xy
+
+                self._drag_xy = (self.mouse_xy[0] - self._drag_origin_xy[0],
+                                 self.mouse_xy[1] - self._drag_origin_xy[1])
+
+                self._drag_delta_xy = (self._drag_xy[0] - self._drag_prior_mouse_xy[0],
+                                       self._drag_xy[1] - self._drag_prior_mouse_xy[1])
+
+                # Assemble event details.
                 event['type'] = str('mousedrag')
-                event['drag_originX'] = self._drag_origin[0]
-                event['drag_originY'] = self._drag_origin[1]
-                event['dragX'] = event['canvasX'] - self._drag_origin[0]
-                event['dragY'] = event['canvasY'] - self._drag_origin[1]
+                event['drag_origin_xy'] = self._drag_origin_xy
+                event['drag_xy'] = self._drag_xy
+                event['drag_delta_xy'] = self._drag_delta_xy
 
                 self._mouse_drag_dispatcher(event)
             else:
@@ -178,9 +193,11 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
         elif event['type'] == 'mousedown':
             # Mouse button has been clicked down.
 
-            # Update drag origin in case the mouse moves afterwards and generates a drag event.
-            if not self._drag_origin:
-                self._drag_origin = [event['canvasX'], event['canvasY']]
+            # Update drag origin in case the mouse moves afterwards thereby generating a drag
+            # event.
+            self._drag_prior_mouse_xy = self.mouse_xy
+            self._drag_origin_xy = self.mouse_xy
+            self._drag_xy = 0, 0
 
             self._flag_mouse_down = True
             self._mouse_down_dispatcher(event)
@@ -193,9 +210,12 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
                 # Mouse changing from "down" to "up" generates a "click" event.
                 self._mouse_click_dispatcher(event)
 
-            # Clear state flags.
+            # Clear/pdate state variables.
             self._flag_mouse_down = False
-            self._drag_origin = None
+            self._drag_origin_xy = None
+            self._drag_delta_xy = None
+            self._drag_xy = None
+            self._drag_prior_mouse_xy = None
 
         elif event['type'] == 'wheel':
             # Wheel scroll event.

@@ -35,16 +35,10 @@ class Transform(object):
 
         Initialize self if optional values are supplied.
         """
-        self.m11 = 0
-        self.m12 = 0
-        self.m13 = 0
-        self.m21 = 0
-        self.m22 = 0
-        self.m23 = 0
-
-        self.reset()
         if values:
             self.values = values
+        else:
+            self.reset()
 
     def __repr__(self):
         """
@@ -87,7 +81,7 @@ class Transform(object):
     def reset(self):
         """Reset self to identity transform.
         """
-        self.m11, self.m12, self.m13, self.m12, self.m22, self.m23 = 1, 0, 0, 0, 1, 0
+        self.m11, self.m12, self.m21, self.m22, self.m13, self.m23 = 1, 0, 0, 1, 0, 0
 
         return self
 
@@ -192,9 +186,11 @@ class Transform(object):
         m23 = self.m12*dx + self.m22*dy
 
         if update:
-            self.m13 -= m13
-            self.m23 -= m23
+            # Translate relative to current position.
+            self.m13 += m13
+            self.m23 += m23
         else:
+            # Translate to absolute position.
             self.m13 = m13
             self.m23 = m23
 

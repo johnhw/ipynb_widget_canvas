@@ -136,19 +136,20 @@ require(["widgets/js/widget"], function (WidgetManager) {
             // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#transformations
             // https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Canvas_tutorial/Transformations
             var M = this.model.get('transformation');
+            //  M =                   m11,  m12,  m21,  m22,  m13,  m23
+            this.context.setTransform(M[0], M[1], M[2], M[3], M[4], M[5]);
 
-            // M = [m11, m12, m21, m22, m13, m23]
-            var m11, m12, m21, m22, m13, m23;
-            m11 = M[0]
-            m12 = M[1]
-            m21 = M[2]
-            m22 = M[3]
-            m13 = M[4]
-            m23 = M[5]
+            // var m11, m12, m21, m22, m13, m23;
+            // m11 = M[0]
+            // m12 = M[1]
+            // m21 = M[2]
+            // m22 = M[3]
+            // m13 = M[4]
+            // m23 = M[5]
 
             // console.log(m11, m12, m21, m22, m13, m23);
             // console.log(this.context);
-            this.context.setTransform(m11, m12, m21, m22, m13, m23);
+            // this.context.setTransform(m11, m12, m21, m22, m13, m23);
 
             this.draw();
 
@@ -169,12 +170,20 @@ require(["widgets/js/widget"], function (WidgetManager) {
             this.context.restore();
         },
 
+        set_smoothing: function (value) {
+            this.context.mozImageSmoothingEnabled = value
+            this.context.oImageSmoothingEnabled = value
+            this.context.webkitImageSmoothingEnabled = value
+            this.context.imageSmoothingEnabled = value
+        },
+
         draw: function () {
             // Draw image data from internal <img> to the <canvas>.
             // console.log('draw');
 
             // Clear any prior image data.
             this.clear();
+            this.set_smoothing(false);
 
             // Draw image to screen.
             this.context.drawImage(this.image, 0, 0);
