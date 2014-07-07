@@ -7,7 +7,7 @@ import time
 
 import IPython.html.widgets
 import image
-
+import transform
 
 #################################################
 # Helper functions
@@ -63,14 +63,13 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
     # Image data source.
     data_encode = IPython.utils.traitlets.Unicode(sync=True)
 
-    # Width and height of canvas as rendered by the browser.  Size units are 'CSS Pixels'. This is
-    # analagous to a portal or window.  These parameters default to the image's inherent width and
-    # height in data pixels.
+    # Width and height of canvas as determined by the front-end after decoding a new image sent
+    # from the backend.
     width = IPython.utils.traitlets.CFloat(sync=True)
     height = IPython.utils.traitlets.CFloat(sync=True)
 
     # Image transformation.
-    transformation = IPython.utils.traitlets.List(sync=True)
+    _transform = IPython.utils.traitlets.List(sync=True)
 
     # Mouse and keyboard event information.
     _mouse = IPython.utils.traitlets.Dict(sync=True)
@@ -117,6 +116,9 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
         self.fmt = fmt
         if data_image is not None:
             self.image = data_image
+
+        # Manage image 2D affine transform information.
+        self.transform = transform.Transform()
 
     def __repr__(self):
         val = """Size: {:d} bytes\nFormat: {:s}
@@ -185,10 +187,10 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
                 event['drag_xy'] = self._drag_xy
                 event['drag_delta_xy'] = self._drag_delta_xy
 
-                self._mouse_drag_dispatcher(event)
+                self._mouse_drag_dispatcher(self, event)
             else:
                 # Mouse has moved with button up.
-                self._mouse_move_dispatcher(event)
+                self._mouse_move_dispatcher(self, event)
 
         elif event['type'] == 'mousedown':
             # Mouse button has been clicked down.
@@ -200,15 +202,15 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
             self._drag_xy = 0, 0
 
             self._flag_mouse_down = True
-            self._mouse_down_dispatcher(event)
+            self._mouse_down_dispatcher(self, event)
 
         elif event['type'] == 'mouseup':
             # Mouse button has been lifted.
-            self._mouse_up_dispatcher(event)
+            self._mouse_up_dispatcher(self, event)
 
             if self._flag_mouse_down:
                 # Mouse changing from "down" to "up" generates a "click" event.
-                self._mouse_click_dispatcher(event)
+                self._mouse_click_dispatcher(self, event)
 
             # Clear/pdate state variables.
             self._flag_mouse_down = False
@@ -219,7 +221,7 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
 
         elif event['type'] == 'wheel':
             # Wheel scroll event.
-            self._mouse_wheel_dispatcher(event)
+            self._mouse_wheel_dispatcher(self, event)
 
         else:
             pass
@@ -227,8 +229,8 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
     #######################################################
     # User-facing methods to register Python event handler functions.
     #
-    # The signature for each registration function follow a common theme:
-    #   callback : function to be called with event information as argument.
+    # The signature for each registration function follows a common theme:
+    #   callback : function to be called with two arguments: widget instance and event information.
     #   remove : bool (optional), set to true to unregister the callback function.
     #
     def on_mouse_move(self, callback, remove=False):

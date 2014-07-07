@@ -15,8 +15,10 @@ require(["widgets/js/widget"], function (WidgetManager) {
             this.model.on('change:data_encode', this.update_data_encode, this);
             // this.model.on('change:width', this.update_width, this);
             // this.model.on('change:height', this.update_height, this);
-            this.model.on('change:transformation', this.update_transformation, this);
+            this.model.on('change:_transform', this.update_transform, this);
 
+            // this.time_mouse = Date.now()
+            // this.time_mouse_threshold = 20 // miliseconds
             CanvasImageView.__super__.initialize.apply(this, arguments);
         },
 
@@ -125,7 +127,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
             this.touch()
         },
 
-        update_transformation: function () {
+        update_transform: function () {
             // Python --> JavaScript
             // console.log('update_transformation');
             // console.log(this.model);
@@ -135,7 +137,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
             // Apply new transformation.
             // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#transformations
             // https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Canvas_tutorial/Transformations
-            var M = this.model.get('transformation');
+            var M = this.model.get('_transform');
             //  M =                   m11,  m12,  m21,  m22,  m13,  m23
             this.context.setTransform(M[0], M[1], M[2], M[3], M[4], M[5]);
 
@@ -254,6 +256,17 @@ require(["widgets/js/widget"], function (WidgetManager) {
             var ev = jev.originalEvent
             // Event handler responding to mouse motion and button clicks.
             // console.log(ev);
+
+            // Rate limit for motion events.
+            // if (ev['type'] == 'mousemove') {
+            //     var time_now = Date.now()
+            //     var time_delta = time_now - this.time_mouse
+            //     if (time_delta < this.time_mouse_threshold) {
+            //         return
+            //     } else {
+            //         this.time_mouse = time_now
+            //     }
+            // }
 
             var info = this._build_mouse_info(ev)
             this.model.set('_mouse', info);

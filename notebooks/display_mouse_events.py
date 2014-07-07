@@ -2,7 +2,7 @@
 from __future__ import print_function, unicode_literals, division
 
 import IPython
-from IPython.html.widgets import HTMLWidget, TextareaWidget, ContainerWidget
+from IPython.html.widgets import HTMLWidget, TextareaWidget, ContainerWidget, IntTextWidget
 
 import widget_canvas as canvas
 
@@ -48,6 +48,9 @@ def display(image):
     wid_click = HTMLWidget(value='Click')
     wid_scroll = HTMLWidget(value='Scroll')
 
+    wid_count = IntTextWidget(description='Count', value=0)
+    # wid_count.set_css({'width': '200px'})
+
     # Event information.
     wid_event_text = TextareaWidget()
     wid_event_text.set_css({'width': '500', 'height': '130', 'font-family': 'monospace'})
@@ -58,18 +61,24 @@ def display(image):
     container_drag = ContainerWidget(children=[wid_drag, wid_drag_XY])
 
     container_info = ContainerWidget(children=[container_move, container_drag, wid_down_up,
-                                               wid_click, wid_scroll, wid_event_text])
+                                               wid_click, wid_scroll, wid_count,
+                                               wid_event_text])
     container_info.set_css({'margin-left': '10px'})
 
     container_main = ContainerWidget(children=[wid_image, container_info])
 
     #############################################
     # Build event handlers.
-    def handle_event(ev):
+    def update_count():
+        val = wid_count.value
+        wid_count.value = val + 1
+
+    def handle_event(widget, ev):
         """Just a generic event handler."""
         wid_event_text.value = 'Event:\n{}'.format(ev)
+        update_count()
 
-    def handle_motion(ev):
+    def handle_motion(widget, ev):
         wid_move.value = '<b>Move</b>'
         X, Y = ev['canvas_xy']
         wid_move_XY.value = 'XY: {:04.0f}, {:04.0f}'.format(X, Y)
@@ -77,7 +86,7 @@ def display(image):
         wid_drag.value = 'Drag'
         wid_drag_XY.value = 'XY:'
 
-    def handle_drag(ev):
+    def handle_drag(widget, ev):
         wid_move.value = 'Move'
         wid_drag.value = '<b>Drag</b>'
         X, Y = ev['drag_xy']
@@ -85,16 +94,16 @@ def display(image):
         wid_drag_XY.value = 'XY: {:04.0f}, {:04.0f}'.format(X, Y)
         wid_move_XY.value = 'XY:'
 
-    def handle_down(ev):
+    def handle_down(widget, ev):
         wid_down_up.value = 'Button: Down'
 
-    def handle_up(ev):
+    def handle_up(widget, ev):
         wid_down_up.value = 'Button: Up'
 
     _click_classes = [style_E, style_F]
     ix = [0]
 
-    def handle_click(ev):
+    def handle_click(widget, ev):
         wid_click.remove_class(_click_classes[ix[0]])
 
         ix[0] = (ix[0] + 1) % 2
@@ -103,7 +112,7 @@ def display(image):
     _scroll_classes = [style_B, style_C]
     iw = [0]
 
-    def handle_scroll(ev):
+    def handle_scroll(widget, ev):
         wid_scroll.remove_class(_scroll_classes[iw[0]])
 
         iw[0] = (iw[0] + 1) % 2
