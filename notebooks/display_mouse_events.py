@@ -53,7 +53,7 @@ def display(image):
 
     # Event information.
     wid_event_text = TextareaWidget()
-    wid_event_text.set_css({'width': '500', 'height': '130', 'font-family': 'monospace'})
+    wid_event_text.set_css({'width': '450', 'height': '130', 'font-family': 'monospace'})
 
     #############################################
     # Assemble widgets inside containers.

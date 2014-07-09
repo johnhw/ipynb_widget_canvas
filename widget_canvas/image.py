@@ -32,15 +32,15 @@ def write(fname, data):
     img.save(fname)
 
 
-def png_xy(blob_str):
+def png_xy(blob):
     """
     Read the width/height from a PNG header
     https://github.com/minrk/ipython_extensions/blob/master/extensions/retina.py
     """
-    ix = blob_str.index(b'IHDR')
+    ix = blob.index(b'IHDR')
 
     # Next 8 bytes are width and height
-    w4h4 = blob_str[ix + 4:ix + 12]
+    w4h4 = blob[ix + 4:ix + 12]
     width, height = struct.unpack('>ii', w4h4)
 
     return width, height
@@ -48,7 +48,7 @@ def png_xy(blob_str):
 
 def determine_mode(data):
     """
-    Determine color mode.  Input data is expected to be 3D: [num_lines, num_samples, num_bands].
+    Determine image color mode.  Input data is expected to be 3D: [num_lines, num_samples, num_bands].
     """
 
     # Force data to be Numpy ndarray, if not already.

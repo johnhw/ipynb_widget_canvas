@@ -14,7 +14,7 @@ class Transform(object):
     """
     This is a simple class for manipulating and keeping track of a transformation matrix.
     """
-    def __init__(self, values=None):
+    def __init__(self, values=None, auto_notify=False, notify_callback=None):
         """
         Create a new instance of a Transform.
         Defined by a sequence of six numbers from the elements
@@ -34,11 +34,18 @@ class Transform(object):
         linked description.
 
         Initialize self if optional values are supplied.
+
+        Optional callback function to be called when transform values are updated.
         """
+        self.notify_callback = notify_callback
+        self.auto_notify = auto_notify
+
         if values:
             self.values = values
         else:
             self.reset()
+
+        self.values_old = self.values
 
     def __repr__(self):
         """
@@ -74,12 +81,31 @@ class Transform(object):
 
     @values.setter
     def values(self, values_new):
-        """Set new vales for transform, values_new = [m11, m12, m21, m22, m13, m23].
-        """
-        if len(values_new) != 6:
-            raise ValueError('New values must be size six: {:d}'.format(len(values_new)))
+        """Set new vales for transform.  Can supply either 2, 4 or 6 values.
 
-        self.m11, self.m12, self.m21, self.m22, self.m13, self.m23 = values_new
+        values_new = [m13, m22], or
+        values_new = [m11, m12, m21, m22], or
+        values_new = [m11, m12, m21, m22, m13, m23]
+        """
+        values_old = self.values
+
+        N = len(values_new)
+        if N == 6:
+            # Replace all six terms.
+            self.m11, self.m12, self.m21, self.m22, self.m13, self.m23 = values_new
+        elif N == 4:
+            # Replace scale and shear terms, exclude offset terms.
+            self.m11, self.m12, self.m21, self.m22 = values_new
+        elif N == 2:
+            # Replace offset terms only.
+            self.m13, self.m23 = values_new
+        else:
+            raise ValueError('New values must be size two, four or six: {:d}'.format(N))
+
+        self.values_old = values_old
+
+        if self.auto_notify:
+            self.notify()
 
     def reset(self):
         """Reset self to identity transform.
@@ -91,10 +117,16 @@ class Transform(object):
     def copy(self):
         """Return independent copy of self.
         """
-        Q = Transform()
-        Q.values = self.values
+        Q = Transform(self.values)
 
         return Q
+
+    def notify(self):
+        """Call user-supplied callback function with updated transform state values.
+        """
+        # Only do something if values have changed and callback function is defined.
+        if self.values != self.values_old and self.notify_callback:
+            self.notify_callback(self.values)
 
     #############################################
 
@@ -127,7 +159,7 @@ class Transform(object):
 
         return P
 
-    def invert(self):
+    def invert(self, copy=False):
         """Invert self.
         """
         d = 1. / (self.m11*self.m22 - self.m12*self.m21)
@@ -139,16 +171,17 @@ class Transform(object):
         m13 = d*(self.m21*self.m23 - self.m22*self.m13)
         m23 = d*(self.m12*self.m13 - self.m11*self.m23)
 
-        # self.m11 = m11
-        # self.m12 = m12
-        # self.m13 = m13
-        # self.m21 = m21
-        # self.m22 = m22
-        # self.m23 = m23
+        values = m11, m12, m21, m22, m13, m23
 
-        self.values = m11, m12, m21, m22, m13, m23
+        if copy:
+            # Return inverse transform as independent copy.
+            Q = Transform(values)
+        else:
+            # Return self with inverse applied.
+            self.values = values
+            Q = self
 
-        return self
+        return Q
 
     def rotate(self, rad):
         """Rotate self about origin.
@@ -161,12 +194,7 @@ class Transform(object):
         m21 = -self.m11*s + self.m21*c
         m22 = -self.m12*s + self.m22*c
 
-        self.m11 = m11
-        self.m12 = m12
-#         self.m13 = m13
-        self.m21 = m21
-        self.m22 = m22
-#         self.m23 = m23
+        self.values = m11, m12, m21, m22
 
         return self
 
@@ -176,27 +204,26 @@ class Transform(object):
         if not sy:
             sy = sx
 
-        self.m11 *= sx
-        self.m12 *= sx
-        self.m21 *= sy
-        self.m22 *= sy
+        m11 = self.m11 * sx
+        m12 = self.m12 * sx
+        m21 = self.m21 * sy
+        m22 = self.m22 * sy
+
+        self.values = m11, m12, m21, m22
 
         return self
 
-    def translate(self, dx, dy):  # , update=True):
+    def translate(self, dx, dy):
         """Offset self.
         """
-        m13 = self.m11*dx + self.m21*dy
-        m23 = self.m12*dx + self.m22*dy
+        delta_13 = self.m11*dx + self.m21*dy
+        delta_23 = self.m12*dx + self.m22*dy
 
-        # if update:
         # Translate relative to current position.
-        self.m13 += m13
-        self.m23 += m23
-        # else:
-        #     # Translate to absolute position.
-        #     self.m13 = m13
-        #     self.m23 = m23
+        m13 = self.m13 + delta_13
+        m23 = self.m23 + delta_23
+
+        self.values = m13, m23
 
         return self
 
@@ -242,6 +269,8 @@ class Transform(object):
         m22 /= scale_y
         shear /= scale_y
 
+        scale = scale_x, scale_y
+
         # m11*m22 - m21*m12 should now be 1 or -1
         value_test = m11*m22 - m21*m12
         eps = 1.e-6
@@ -262,8 +291,6 @@ class Transform(object):
 
         # Offsets.
         offset = m13, m23
-
-        scale = scale_x, scale_y
 
         return scale, shear, rotation, offset
 

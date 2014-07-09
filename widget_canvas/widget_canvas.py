@@ -63,6 +63,9 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
     # Image data source.
     data_encode = IPython.utils.traitlets.Unicode(sync=True)
 
+    # Image smoothing.
+    smoothing = IPython.utils.traitlets.Bool(sync=True)
+
     # Width and height of canvas as determined by the front-end after decoding a new image sent
     # from the backend.
     width = IPython.utils.traitlets.CFloat(sync=True)
@@ -267,4 +270,4 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
 
 # Bootstrap Widget's JavaScript code into Notebook browser environment.
 _bootstrap_js()
-time.sleep(0.01)  # sleep to give time for JavaScript stuff to get set up in the background.
+time.sleep(0.01)  # sleep a tiny bit to give time for JavaScript stuff to set up in the background.

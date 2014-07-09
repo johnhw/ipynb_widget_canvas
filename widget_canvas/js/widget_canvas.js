@@ -16,6 +16,7 @@ require(["widgets/js/widget"], function (WidgetManager) {
             // this.model.on('change:width', this.update_width, this);
             // this.model.on('change:height', this.update_height, this);
             this.model.on('change:_transform', this.update_transform, this);
+            this.model.on('change:smoothing', this.update_smoothing, this);
 
             // this.time_mouse = Date.now()
             // this.time_mouse_threshold = 20 // miliseconds
@@ -127,6 +128,19 @@ require(["widgets/js/widget"], function (WidgetManager) {
             this.touch()
         },
 
+        update_smoothing: function () {
+            // Python --> JavaScript
+            // console.log('update_smoothing');
+            this.set_smoothing(this.model.get('smoothing'));
+        },
+
+        set_smoothing: function (value) {
+            this.context.mozImageSmoothingEnabled = value
+            this.context.oImageSmoothingEnabled = value
+            this.context.webkitImageSmoothingEnabled = value
+            this.context.imageSmoothingEnabled = value
+        },
+
         update_transform: function () {
             // Python --> JavaScript
             // console.log('update_transformation');
@@ -170,13 +184,6 @@ require(["widgets/js/widget"], function (WidgetManager) {
             this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
             this.context.restore();
-        },
-
-        set_smoothing: function (value) {
-            this.context.mozImageSmoothingEnabled = value
-            this.context.oImageSmoothingEnabled = value
-            this.context.webkitImageSmoothingEnabled = value
-            this.context.imageSmoothingEnabled = value
         },
 
         draw: function () {
