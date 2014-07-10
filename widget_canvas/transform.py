@@ -186,6 +186,7 @@ class Transform(object):
     def rotate(self, rad):
         """Rotate self about origin.
         """
+        print('r')
         c = np.cos(rad)
         s = np.sin(rad)
 
@@ -201,6 +202,7 @@ class Transform(object):
     def scale(self, sx, sy=None):
         """Apply X,Y scale factors to self.
         """
+        print('s')
         if not sy:
             sy = sx
 

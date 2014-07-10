@@ -71,8 +71,8 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
     width = IPython.utils.traitlets.CFloat(sync=True)
     height = IPython.utils.traitlets.CFloat(sync=True)
 
-    # Image transformation.
-    _transform = IPython.utils.traitlets.List(sync=True)
+    # Image transformation values.
+    _transform_values = IPython.utils.traitlets.List(sync=True)
 
     # Mouse and keyboard event information.
     _mouse = IPython.utils.traitlets.Dict(sync=True)
@@ -121,7 +121,7 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
             self.image = data_image
 
         # Manage image 2D affine transform information.
-        self.transform = transform.Transform()
+        self._transform = transform.Transform()
 
     def __repr__(self):
         val = """Size: {:d} bytes\nFormat: {:s}
@@ -147,6 +147,16 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
 
         data_b64 = base64.b64encode(data_comp)
         self.data_encode = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
+
+    @property
+    def transform(self):
+        print('get')
+        return self._transform
+
+    @transform.setter
+    def transform(self, value):
+        print('set')
+        self._transform = value
 
     def display(self):
         """
