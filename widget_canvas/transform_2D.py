@@ -115,6 +115,32 @@ def cartesian(points):
     return points_cart
 
 
+def apply(H, data_in):
+    """
+    Apply transform to data points.
+
+    Parameters
+    ----------
+    points : array_like
+        Two dimensional array with shape (num_points, 2) or (num_points, 3).
+        *or*
+        One dimensional array with shape (2,) or (3,).
+
+    """
+    if not transform_is_valid(H):
+        raise ValueError('Invalid transform H: {}'.format(H))
+
+    original_homog = is_homogeneous(data_in)
+    data_in = homogeneous(data_in)
+
+    data_out = data_in.dot(H)
+
+    if not original_homog:
+        data_out = cartesian(data_out)
+
+    return data_out
+
+
 def transform_is_valid(H):
     """
     Check that supplied transform matrix has proper shape and structure.
@@ -140,19 +166,39 @@ def transform_is_valid(H):
     if abs(val - 1.) > eps:
         return False
 
+    # Singular?
+    if is_singular(H):
+        return False
+
     # Everything checks out fine.
     return True
+
+
+def is_singular(H):
+    """
+    Check if input transform matrix is singular
+    """
+
+    value_test = H[0, 0]*H[1, 1] - H[0, 1]*H[1, 0]
+
+    # self.m11*self.m22 - self.m12*self.m21
+
+    eps = 1.e-6
+    if abs(value_test) <= eps:
+        return True
+    else:
+        return False
 
 #################################################
 
 
-def translate(offset):
+def offset(offset):
     """
     Build translation matrix.
 
     Parameters
     ----------
-    offset : Translation vector, 2D ndarray
+    offset : translation vector, 2D ndarray
 
     Returns
     -------
@@ -193,8 +239,8 @@ def rotate(angle, origin=None):
     if not origin is None:
         origin = homogeneous(origin)
 
-        # offset = origin - np.dot(H, origin)
-        offset = np.dot((np.identity(3) - H), origin)
+        offset = origin - np.dot(H, origin)
+        # offset = np.dot((np.identity(3) - H), origin)
         H[:, 2] = offset
 
     return H
@@ -297,8 +343,9 @@ def perspective(values):
     return H
 
 
-def shape_match_scale(img_src, img_dst):
-    """Helper function for computing similarity transform to make size of source image match
+def _compute_shape_scales(img_src, img_dst):
+    """
+    Helper function for computing similarity transform to make size of source image match
     that of destination image.
 
     Parameters
@@ -329,8 +376,10 @@ def shape_match_scale(img_src, img_dst):
     return height_scl, width_scl
 
 
-def shape_match(img_src, img_dst):
-    """Compute similarity transform to make size of source image match that of destination image.
+def scale_shape_match(img_src, img_dst):
+    """
+    Compute similarity transform that will make size of source image match that of destination
+    image.
 
     Parameters
     ----------
@@ -344,16 +393,20 @@ def shape_match(img_src, img_dst):
     H : homogeneous transformation matrix, (3, 3)
 
     """
-    height_scl, width_scl = shape_match_scale(img_src, img_dst)
+    xy_scales = _compute_shape_scales(img_src, img_dst)
 
-    H = np.asarray([[width_scl, 0., 0.],
-                    [0., height_scl, 0.],
-                    [0., 0., 1.]], dtype=np.float32)
+    H = scale(xy_scales)
+
+    # np.asarray([[width_scl, 0., 0.],
+    #                 [0., height_scl, 0.],
+    #                 [0., 0., 1.]], dtype=np.float32)
+
     return H
 
 
 def decompose(H):
-    """Decompose transform matrix into component parameters.
+    """
+    Decompose transform matrix into component parameters.
 
     Parameters
     ----------
@@ -361,36 +414,77 @@ def decompose(H):
 
     Returns
     -------
-    scale : Vector of three scale factors
-    shear : List of shear factors for x-y, x-z, y-z axes
-    angles : List of Euler angles about static x, y, z axes
-    translate : Translation vector along x, y, z axes
-    perspective : Perspective partition of matrix
+    scale : X and Y scale factors
+    shear : X and Y shear components
+    angle : rotation angle
+    offset : X and Y translation distances
 
-    Notes
-    -----
-    Raise ValueError if matrix is of wrong type or degenerative.
 
-    Decompose does not properely handle case when scaling is NOT along a cardinal axis.  But now
-    that I think about it, this case is a combination of rotation and traditional scaling.
+    Notes:
 
+    M = [m11, m12, m21, m22, m13, m23]
+          0    1    2    3    4    5
+          A    C    B    D
+
+    float A = aMatrix.xx,
+          B = aMatrix.yx,
+          C = aMatrix.xy,
+          D = aMatrix.yy;
     """
-    H = homo_in_4d(H)
-    scale, shear, angles, translate, perspective = gohlke.transformations.decompose_matrix(H)
 
-    # Sometimes the values coming out are in the form of a list, sometimes as ndarray.  This makes
-    # it consistent.
-    scale = np.asarray(scale)
-    shear = np.asarray(shear)
-    angles = np.asarray(angles)
-    translate = np.asarray(translate)
-    perspective = np.asarray(perspective)
+    if is_singular():
+        raise ValueError('Singular matrix.')
 
-    return scale, shear, angles, translate, perspective
+    # Transform matrix elements.
+    m11 = H[0, 0]
+    m12 = H[0, 1]
+    m21 = H[1, 0]
+    m22 = H[1, 1]
+    m13 = H[0, 2]
+    m23 = H[1, 2]
+
+    scale_x = (m11**2 + m21**2)**.5
+    m11 /= scale_x
+    m21 /= scale_x
+
+    shear = m11*m12 + m21*m22
+    m12 -= m11*shear
+    m22 -= m21*shear
+
+    scale_y = (m12**2 + m22**2)**.5
+    m12 /= scale_y
+    m22 /= scale_y
+    shear /= scale_y
+
+    scale = scale_x, scale_y
+
+    # m11*m22 - m21*m12 should now be 1 or -1
+    value_test = m11*m22 - m21*m12
+    eps = 1.e-6
+    if abs(value_test - 1) > eps:
+        raise ValueError('Invalid determinant: {:f}'.format(value_test))
+
+    if m11*m22 < m21*m12:
+        # Flip signs.
+        m11 = -m11
+        m21 = -m21
+        m12 = -m12
+        m22 = -m22
+        shear = -shear
+        scale_x = -scale_x
+
+    # Angle of rotation.
+    rotation = np.arctan2(m21, m11)
+
+    # Offsets.
+    offset = m13, m23
+
+    return scale, shear, rotation, offset
 
 
-def concatenate(*matrices):
-    """Concatenate series of transformation matrices.
+def chain(*matrices):
+    """
+    Chain together a series of transformation matrices.
 
     Parameters
     ----------
@@ -403,20 +497,27 @@ def concatenate(*matrices):
 
     Returns
     -------
-    H : Concatenation of input transformation matrices, (4, 4)
+    H : Concatenation of input transformation matrices, (3, 3)
 
     """
-    H = np.identity(4)
+    H = np.identity(3)
+
     for Q in matrices:
-        Q = homo_in_4d(Q)
+        if not transform_is_valid(Q):
+            raise ValueError('Invalid transform Q: {}'.format(Q))
+
         H = Q.dot(H)
+
+    # Normalize result to proper homogeneous form.
+    H /= H[-1, -1]
 
     return H
 
 
-def invert(H, normalize=True):
-    """Invert supplied transform matrix.  Normalize output array to unit homography scale
-    factor, e.g. H[-1, -1] = 1.0.  Thus, this inverse is not the same as np.linalg.inv().
+def invert(H):
+    """
+    Invert supplied transform matrix.  Normalize output array to unit homography scale factor, e.g.
+    H[-1, -1] = 1.0.  Therefore this inverse function is not the same as np.linalg.inv().
 
     Parameters
     ----------
@@ -427,22 +528,13 @@ def invert(H, normalize=True):
     H_inv : Inverse of matrix H
 
     """
-    H = np.asarray(H)
-    D = H.shape[0]
-    H = homo_in_4d(H)
 
-    use_gohlke = False
-    if use_gohlke:
-        H_inv = gohlke.transformations.inverse_matrix(H)
-    else:
-        H_inv = np.linalg.inv(H)
+    if not transform_is_valid(H):
+        raise ValueError('Invalid transform H: {}'.format(H))
 
-    # print('a')
-    # print(H_inv)
-    if D == 3:
-        H_inv = homo_in_3d(H_inv)
+    H_inv = np.linalg.inv(H)
 
-    if normalize:
-        H_inv /= H_inv[-1, -1]
+    # Normalize result to proper homogeneous form.
+    H_inv /= H_inv[-1, -1]
 
     return H_inv

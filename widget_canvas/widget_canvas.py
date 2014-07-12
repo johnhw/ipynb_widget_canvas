@@ -7,7 +7,7 @@ import time
 
 import IPython.html.widgets
 import image
-import transform
+import transform_2D
 
 #################################################
 # Helper functions
