@@ -45,7 +45,7 @@ def is_homogeneous(points):
         raise ValueError('Invalid number of data dimensions: {:d}'.format(points.ndim))
 
 
-def homogeneous(points):
+def force_homogeneous(points):
     """
     Ensure that supplied data points are 3D Homogeneous.
     http://en.wikipedia.org/wiki/Homogeneous_coordinates
@@ -131,7 +131,7 @@ def apply(H, data_in):
         raise ValueError('Invalid transform H: {}'.format(H))
 
     original_homog = is_homogeneous(data_in)
-    data_in = homogeneous(data_in)
+    data_in = force_homogeneous(data_in)
 
     data_out = data_in.dot(H)
 
@@ -205,7 +205,7 @@ def offset(offset):
     H : Transform matrix
 
     """
-    offset = homogeneous(offset)
+    offset = force_homogeneous(offset)
 
     H = np.identity(3)
     H[:, 2] = offset
@@ -237,7 +237,7 @@ def rotate(angle, origin=None):
     H[1, 0] = sina
 
     if not origin is None:
-        origin = homogeneous(origin)
+        origin = force_homogeneous(origin)
 
         offset = origin - np.dot(H, origin)
         # offset = np.dot((np.identity(3) - H), origin)
@@ -303,7 +303,7 @@ def shear(angle, direction):
 
     """
     tangle = np.tan(angle)
-    direction = homogeneous(direction)
+    direction = force_homogeneous(direction)
 
     normal = np.asarray([0., 0., 1.])
     # point = np.zeros(3)
@@ -492,8 +492,8 @@ def chain(*matrices):
 
     Notes
     -----
-    if matrices = [H1, H2], then output of this function is the combined transform of applying H1 to
-    some data, and then afterwards applying H2 to the output of the previous step.
+    if matrices = [H1, H2], then output of this function is the combined transform of applying H1
+    to some data, and then afterwards applying H2 to the output of the previous step.
 
     Returns
     -------
