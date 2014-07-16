@@ -106,7 +106,7 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
         self._mouse_up_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
         self._mouse_wheel_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
 
-        # Helper variables for mouse state.
+        # Mouse state helper variables.
         self._flag_mouse_down = False
         self._drag_origin_xy = None
         self._drag_xy = None        # distance from drag_origin
@@ -121,7 +121,7 @@ class ImageWidget(IPython.html.widgets.widget.DOMWidget):
             self.image = data_image
 
         # Manage image 2D affine transform information.
-        self._transform = transform.Transform()
+        # self._transform = transform.Transform()
 
     def __repr__(self):
         val = """Size: {:d} bytes\nFormat: {:s}

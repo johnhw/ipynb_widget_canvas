@@ -81,7 +81,7 @@ def force_homogeneous(points):
     return points_homog
 
 
-def cartesian(points):
+def force_cartesian(points):
     """
     Ensure that data points are 2D Cartesian.
     http://en.wikipedia.org/wiki/Homogeneous_coordinates
@@ -115,33 +115,7 @@ def cartesian(points):
     return points_cart
 
 
-def apply(H, data_in):
-    """
-    Apply transform to data points.
-
-    Parameters
-    ----------
-    points : array_like
-        Two dimensional array with shape (num_points, 2) or (num_points, 3).
-        *or*
-        One dimensional array with shape (2,) or (3,).
-
-    """
-    if not transform_is_valid(H):
-        raise ValueError('Invalid transform H: {}'.format(H))
-
-    original_homog = is_homogeneous(data_in)
-    data_in = force_homogeneous(data_in)
-
-    data_out = data_in.dot(H)
-
-    if not original_homog:
-        data_out = cartesian(data_out)
-
-    return data_out
-
-
-def transform_is_valid(H):
+def is_valid(H):
     """
     Check that supplied transform matrix has proper shape and structure.
 
@@ -190,6 +164,12 @@ def is_singular(H):
         return False
 
 #################################################
+
+def identity():
+    """
+    Return 3x3 identity matrix.
+    """
+    return np.identity(3)
 
 
 def offset(offset):
@@ -342,66 +322,7 @@ def perspective(values):
 
     return H
 
-
-def _compute_shape_scales(img_src, img_dst):
-    """
-    Helper function for computing similarity transform to make size of source image match
-    that of destination image.
-
-    Parameters
-    ----------
-    img_src : image array, (src_num_rows, src_num_cols, ...) or
-              shape tuple, (src_num_rows, src_num_cols, ...)
-    img_dst : image array, (dst_num_rows, dst_num_cols, ...) or
-              shape tuple, (dst_num_rows, dst_num_cols, ...)
-
-    Returns
-    -------
-    scale_factors : tuple of x and y scale factgors.
-
-    """
-    if issubclass(tuple, type(img_src)):
-        height_src, width_src = img_src[:2]
-    else:
-        height_src, width_src = img_src.shape[:2]
-
-    if issubclass(tuple, type(img_dst)):
-        height_dst, width_dst = img_dst[:2]
-    else:
-        height_dst, width_dst = img_dst.shape[:2]
-
-    height_scl = height_dst / height_src
-    width_scl = width_dst / width_src
-
-    return height_scl, width_scl
-
-
-def scale_shape_match(img_src, img_dst):
-    """
-    Compute similarity transform that will make size of source image match that of destination
-    image.
-
-    Parameters
-    ----------
-    img_src : image array, (src_num_rows, src_num_cols, ...) or
-              shape tuple, (src_num_rows, src_num_cols, ...)
-    img_dst : image array, (dst_num_rows, dst_num_cols, ...) or
-              shape tuple, (dst_num_rows, dst_num_cols, ...)
-
-    Returns
-    -------
-    H : homogeneous transformation matrix, (3, 3)
-
-    """
-    xy_scales = _compute_shape_scales(img_src, img_dst)
-
-    H = scale(xy_scales)
-
-    # np.asarray([[width_scl, 0., 0.],
-    #                 [0., height_scl, 0.],
-    #                 [0., 0., 1.]], dtype=np.float32)
-
-    return H
+#####################
 
 
 def decompose(H):
@@ -481,6 +402,8 @@ def decompose(H):
 
     return scale, shear, rotation, offset
 
+########################
+
 
 def chain(*matrices):
     """
@@ -538,3 +461,92 @@ def invert(H):
     H_inv /= H_inv[-1, -1]
 
     return H_inv
+
+
+def apply(H, points_in):
+    """
+    Apply transform to data points.
+
+    Parameters
+    ----------
+    points : array_like
+        Two dimensional array with shape (num_points, 2) or (num_points, 3).
+        *or*
+        One dimensional array with shape (2,) or (3,).
+
+    """
+    if not transform_is_valid(H):
+        raise ValueError('Invalid transform H: {}'.format(H))
+
+    original_homog = is_homogeneous(points_in)
+    points_in = force_homogeneous(points_in)
+
+    points_out = data_in.dot(H)
+
+    if not original_homog:
+        points_out = cartesian(points_out)
+
+    return points_out
+
+#####################
+
+
+def _compute_shape_scales(img_src, img_dst):
+    """
+    Helper function for computing similarity transform to make size of source image match
+    that of destination image.
+
+    Parameters
+    ----------
+    img_src : image array, (src_num_rows, src_num_cols, ...) or
+              shape tuple, (src_num_rows, src_num_cols, ...)
+    img_dst : image array, (dst_num_rows, dst_num_cols, ...) or
+              shape tuple, (dst_num_rows, dst_num_cols, ...)
+
+    Returns
+    -------
+    scale_factors : tuple of x and y scale factgors.
+
+    """
+    if issubclass(tuple, type(img_src)):
+        height_src, width_src = img_src[:2]
+    else:
+        height_src, width_src = img_src.shape[:2]
+
+    if issubclass(tuple, type(img_dst)):
+        height_dst, width_dst = img_dst[:2]
+    else:
+        height_dst, width_dst = img_dst.shape[:2]
+
+    height_scl = height_dst / height_src
+    width_scl = width_dst / width_src
+
+    return height_scl, width_scl
+
+
+def scale_shape_match(img_src, img_dst):
+    """
+    Compute similarity transform that will make size of source image match that of destination
+    image.
+
+    Parameters
+    ----------
+    img_src : image array, (src_num_rows, src_num_cols, ...) or
+              shape tuple, (src_num_rows, src_num_cols, ...)
+    img_dst : image array, (dst_num_rows, dst_num_cols, ...) or
+              shape tuple, (dst_num_rows, dst_num_cols, ...)
+
+    Returns
+    -------
+    H : homogeneous transformation matrix, (3, 3)
+
+    """
+    xy_scales = _compute_shape_scales(img_src, img_dst)
+
+    H = scale(xy_scales)
+
+    # np.asarray([[width_scl, 0., 0.],
+    #                 [0., height_scl, 0.],
+    #                 [0., 0., 1.]], dtype=np.float32)
+
+    return H
