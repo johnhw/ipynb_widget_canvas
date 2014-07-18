@@ -15,12 +15,17 @@ def is_homogeneous(points):
     """
     Determine if supplied data points are homogeneous (True) or Cartesian (False).
 
+    points : array_like
+        Two dimensional array with shape (num_points, 2) or (num_points, 3).
+        *or*
+        One dimensional array with shape (2,) or (3,).
+
     Returns
     -------
 
     True or False
     """
-    # points = np.asarray(points)
+    points = np.asarray(points)
 
     if points.ndim == 1:
         # Vector.
@@ -28,7 +33,12 @@ def is_homogeneous(points):
             # Cartesian
             return False
         else:
-            # Homogeneous
+            # Should be homogeneous
+            value = points[2]
+            if value != 1:
+                raise ValueError('Supplied data is not valid homogeneous.')
+
+            # Yes, homogeneous.
             return True
     elif points.ndim == 2:
         # Array.
@@ -37,7 +47,13 @@ def is_homogeneous(points):
             # Cartesian
             return False
         elif space_dims == 3:
-            # Homogeneous
+            # Check each point.
+            for p in points:
+                if not is_homogeneous(p):
+                    # Not homogeneous.
+                    return False
+
+            # Yes, homogeneous.
             return True
         else:
             raise ValueError('Invalid input spatial dimension size: {:d}'.format(space_dims))
@@ -71,11 +87,11 @@ def force_homogeneous(points):
         # Convert to homogeneous, extend to 3rd dimension.
         if points.ndim == 1:
             # Single point
-            points_homog = np.asarray([points[0], points[1], 0])
+            points_homog = np.asarray([points[0], points[1], 1])
         elif points.ndim == 2:
             # Multiple data points.
             num_points = points.shape[0]
-            col = np.zeros((num_points, 1))
+            col = np.ones((num_points, 1))
             points_homog = np.concatenate((points, col), axis=1)
 
     return points_homog
@@ -164,6 +180,7 @@ def is_singular(H):
         return False
 
 #################################################
+
 
 def identity():
     """
