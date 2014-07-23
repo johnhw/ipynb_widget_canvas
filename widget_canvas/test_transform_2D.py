@@ -32,6 +32,8 @@ Kinds of tests:
     numpy.testing.assert_allclose(actual, desired, rtol=1e-07, atol=0, err_msg='', verbose=True)
 """
 
+#################################################
+
 
 class Test_Basic_Stuff(unittest.TestCase):
     def setUp(self):
@@ -186,6 +188,171 @@ class Test_Basic_Stuff(unittest.TestCase):
 
         np.testing.assert_equal(A, B)
 
+#################################################
+
+
+class Test_Apply(unittest.TestCase):
+    def setUp(self):
+        points = [[0.5, 0.5],
+                  [1.0, 1.0],
+                  [1.1, 1.1],
+                  [2.0, 1.0],
+                  [2.1, 1.0],
+                  [2.2, 1.0],
+                  [2.3, 1.0],
+                  [2.5, 1.0],
+                  [2.7, 1.0],
+                  [1.5, 1.5],
+                  [1.5, 2.5]]
+
+        self.points = np.asarray(points)
+
+    def tearDown(self):
+        pass
+
+    def test_apply_identity(self):
+        I = transform_2D.identity()
+
+        P1 = np.asarray((1.1, 1.1))
+        Q1 = transform_2D.apply(I, P1)
+
+        np.testing.assert_equal(P1, Q1)
+
+        P2 = np.asarray((1.1, 1.1, 1))
+        Q2 = transform_2D.apply(I, P2)
+
+        np.testing.assert_equal(P2, Q2)
+
+        P3 = np.asarray([[1.1, 1.1], [2.3, 2.3]])
+        Q3 = transform_2D.apply(I, P3)
+
+        np.testing.assert_equal(P3, Q3)
+
+    def test_apply_scale(self):
+        value = 1.5
+
+        H = transform_2D.identity()
+        H[0, 0] = value
+        H[1, 1] = value
+
+        P1 = self.points
+        Q1 = transform_2D.apply(H, P1)
+
+        np.testing.assert_equal(P1*value, Q1)
+
+    def test_apply_offset(self):
+        value = 2.2
+
+        H = transform_2D.identity()
+        H[0, 2] = value
+        H[1, 2] = value
+
+        P1 = self.points
+        Q1 = transform_2D.apply(H, P1)
+
+        np.testing.assert_equal(P1 + value, Q1)
+
+#################################################
+
+
+class Test_Apply_Chain(unittest.TestCase):
+    def setUp(self):
+        points = [[0.5, 0.5],
+                  [1.0, 1.0],
+                  [1.1, 1.1],
+                  [2.0, 1.0],
+                  [2.1, 1.0],
+                  [2.2, 1.0],
+                  [2.3, 1.0],
+                  [2.5, 1.0],
+                  [2.7, 1.0],
+                  [1.5, 1.5],
+                  [1.5, 2.5]]
+
+        self.points = np.asarray(points)
+
+    def tearDown(self):
+        pass
+
+    def test_is_sequence(self):
+        I1 = transform_2D.identity()
+        I2 = transform_2D.identity()
+        I3 = transform_2D.identity()
+
+        H1 = I1
+        H1[0, 0] = 3.5
+
+        H2 = I2
+        H2[0, 2] = 3.5
+        H2[1, 2] = 1
+
+        # Single transform is not a sequence of transforms.
+        A = I1
+        value = transform_2D._is_sequence_of_3x3(A)
+        self.assertFalse(value)
+
+        # Sequence of two or more transforms.
+        A = [I1, I2]
+        value = transform_2D._is_sequence_of_3x3(A)
+        self.assertTrue(value)
+
+        A = [I1, I2, I3]
+        value = transform_2D._is_sequence_of_3x3(A)
+        self.assertTrue(value)
+
+        A = [H1, I2, I3]
+        value = transform_2D._is_sequence_of_3x3(A)
+        self.assertTrue(value)
+
+        A = [H1, H2, I3]
+        value = transform_2D._is_sequence_of_3x3(A)
+        self.assertTrue(value)
+
+        # Not at all like a trasnform.
+        A = 5
+        value = transform_2D._is_sequence_of_3x3(A)
+        self.assertFalse(value)
+
+        A = np.arange(5)
+        value = transform_2D._is_sequence_of_3x3(A)
+        self.assertFalse(value)
+
+    # def test_build_chain(self):
+
+    #     Ha = transform_2D.transform.rotation(a)
+    #     Ha2 = projections.transform.rotation(a*2)
+
+    #     Hz = projections.transform.concatenate(Ha, Ha)
+
+    #     val = np.sum((Hz - Ha2)**2)
+    #     self.assertAlmostEqual(val, 0)
+
+    def test_apply_scale(self):
+        value = 1.5
+
+        H = transform_2D.identity()
+        H[0, 0] = value
+        H[1, 1] = value
+
+        P1 = self.points
+        Q1 = transform_2D.apply(H, P1)
+
+        np.testing.assert_equal(P1*value, Q1)
+
+    def test_apply_offset(self):
+        value = 2.2
+
+        H = transform_2D.identity()
+        H[0, 2] = value
+        H[1, 2] = value
+
+        P1 = self.points
+        Q1 = transform_2D.apply(H, P1)
+
+        np.testing.assert_equal(P1 + value, Q1)
+
+#################################################
+
 
 class Test_Build_Transforms(unittest.TestCase):
     def setUp(self):
@@ -205,59 +372,62 @@ class Test_Build_Transforms(unittest.TestCase):
               [0, 1, dy],
               [0, 0, 1]]
 
-        print(Ha)
         np.testing.assert_equal(Ha, Hb)
 
+    def test_rotation(self):
+        a = np.deg2rad(5.)
+        c = np.cos(a)
+        s = np.sin(a)
 
-#     def test_rotation(self):
-#         a = np.deg2rad(5.)
-#         c = np.cos(a)
-#         s = np.sin(a)
+        H = transform_2D.rotate(a)
 
-#         H = projections.transform.rotation(a)
+        self.assertTrue(transform_2D.is_valid(H))
 
-#         self.assertTrue(projections.transform.transform_is_valid(H))
-#         self.assertAlmostEqual(H[0, 0], c)
-#         self.assertAlmostEqual(H[0, 1], -s)
-#         self.assertAlmostEqual(H[1, 1], c)
-#         self.assertAlmostEqual(H[1, 0], s)
+        self.assertAlmostEqual(H[0, 0], c)
+        self.assertAlmostEqual(H[0, 1], -s)
+        self.assertAlmostEqual(H[1, 1], c)
+        self.assertAlmostEqual(H[1, 0], s)
 
-#     def test_scale_single(self):
-#         fac = 0.5
-#         H = projections.transform.scale(fac)
+    def test_scale_single(self):
+        fac = 0.5
+        H = transform_2D.scale(fac)
 
-#         self.assertTrue(projections.transform.transform_is_valid(H))
-#         self.assertAlmostEqual(H[0, 0], fac)
-#         self.assertAlmostEqual(H[1, 1], fac)
-#         self.assertAlmostEqual(H[2, 2], fac)
-#         self.assertAlmostEqual(H[3, 3], 1)
+        self.assertTrue(transform_2D.is_valid(H))
 
-#     def test_scale_2vector(self):
-#         fac = 0.5, 0.2
-#         H = projections.transform.scale(fac)
+        self.assertAlmostEqual(H[0, 0], fac)
+        self.assertAlmostEqual(H[1, 1], fac)
+        self.assertAlmostEqual(H[2, 2], 1)
 
-#         self.assertTrue(projections.transform.transform_is_valid(H))
-#         self.assertAlmostEqual(H[0, 0], fac[0])
-#         self.assertAlmostEqual(H[1, 1], fac[1])
-#         self.assertAlmostEqual(H[2, 2], 1)
-#         self.assertAlmostEqual(H[3, 3], 1)
+    def test_scale_vector(self):
+        fac = 0.5, 0.2
+        H = transform_2D.scale(fac)
 
-#     def test_shear(self):
-#         a = np.deg2rad(5.)
+        self.assertTrue(transform_2D.is_valid(H))
 
-#         d = [0., 1., 0.]
-#         H = projections.transform.shear(a, d)
+        self.assertAlmostEqual(H[0, 0], fac[0])
+        self.assertAlmostEqual(H[1, 1], fac[1])
+        self.assertAlmostEqual(H[2, 2], 1)
 
-#         self.assertTrue(projections.transform.transform_is_valid(H))
-#         self.assertAlmostEqual(H[1, 0], -0.08748866)
-#         self.assertAlmostEqual(H[0, 1], 0)
+    def test_shear(self):
+        a = np.deg2rad(5.)
+        c = np.cos(a)
+        s = np.sin(a)
 
-#         d = [1., 0., 0.]
-#         H = projections.transform.shear(a, d)
+        d = [0., 1.]
+        H = transform_2D.shear(a, d)
 
-#         self.assertTrue(projections.transform.transform_is_valid(H))
-#         self.assertAlmostEqual(H[1, 0], 0)
-#         self.assertAlmostEqual(H[0, 1], 0.08748866)
+        self.assertTrue(transform_2D.is_valid(H))
+
+        self.assertAlmostEqual(H[1, 0], -0.08748866)
+        self.assertAlmostEqual(H[0, 1], 0)
+
+        d = [1., 0., 1.]
+        H = transform_2D.shear(a, d)
+
+        self.assertTrue(transform_2D.is_valid(H))
+
+        self.assertAlmostEqual(H[1, 0], 0)
+        self.assertAlmostEqual(H[0, 1], 0.08748866)
 
 #     def test_perspective(self):
 

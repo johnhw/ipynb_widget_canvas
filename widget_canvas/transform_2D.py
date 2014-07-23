@@ -10,6 +10,32 @@ Build and deconstruct transformation matrices for 2D problems.
 https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 """
 
+"""
+A Note:
+
+Homography transforms with 2-dimensional data are generally represented as a 3x3 array:
+
+        | h00, h01, h02 |
+    H = | h10, h11, h12 |
+        | h20, h21, h22 |
+
+Two-dimensional data coordinates for N samples are represented in homogeneous row form as a 3xN
+array:
+
+        | x0, x1, ..., xn-1 |
+    P = | y0, y1, ..., yn-1 |
+        | 1 , 1 , ..., 1    |
+
+Applying the transform H to data points P yields the transformed coordinates Q;
+
+    Q = HxP   (where the 'x' represents matrix multiplication)
+
+In this work it is tremendously easier to manage sets of data points in column form versus row
+form.  So this is why the code below is transposing and un-transposing the data when applying a
+transform to some data points.
+
+"""
+
 
 def is_homogeneous(points):
     """
@@ -44,7 +70,7 @@ def is_homogeneous(points):
         # Array.
         space_dims = points.shape[1]
         if space_dims == 2:
-            # Cartesian
+            # Cartesian.
             return False
         elif space_dims == 3:
             # Check each point.
@@ -230,7 +256,7 @@ def rotate(angle, origin=None):
     H = np.identity(3)
     H[0, 0] = cosa
     H[1, 1] = cosa
-    H[0, 1] = sina
+    H[0, 1] = -sina
     H[1, 0] = sina
 
     if not origin is None:
@@ -257,6 +283,7 @@ def scale(factor):
 
     """
     factor = np.asarray(factor)
+
     if factor.size == 1:
         H = np.diag([factor, factor, 1.0])
     elif factor.size == 2:
@@ -274,7 +301,7 @@ def shear(angle, direction):
     Parameters
     ----------
     angle : Shear angle (radians)
-    direction : Shear direction vector
+    direction : 2D shear direction vector in XY plane.
 
     Returns
     -------
@@ -300,14 +327,15 @@ def shear(angle, direction):
 
     """
     tangle = np.tan(angle)
-    direction = force_homogeneous(direction)
+    direction = np.asarray([direction[0], direction[1], 0])
 
     normal = np.asarray([0., 0., 1.])
     # point = np.zeros(3)
 
-    H = np.identity(3)
-    H[:2, :2] += tangle * np.outer(direction, normal)
-    # H[:2, 2] = -tangle * np.dot(point, normal) * direction
+    H = identity()
+    # S = tangle * np.outer(direction, normal)
+    S = -tangle * np.dot(point, normal) * direction
+    print(S)
 
     return H
 
@@ -339,7 +367,33 @@ def perspective(values):
 
     return H
 
-#####################
+#################################################
+
+
+def invert(H):
+    """
+    Invert supplied transform matrix.  Normalize output array to unit homography scale factor, e.g.
+    H[-1, -1] = 1.0.  Therefore this inverse function is not the same as np.linalg.inv().
+
+    Parameters
+    ----------
+    H : Transform matrix
+
+    Returns
+    -------
+    H_inv : Inverse of matrix H
+
+    """
+
+    if not is_valid(H):
+        raise ValueError('Invalid transform H: {}'.format(H))
+
+    H_inv = np.linalg.inv(H)
+
+    # Normalize result to proper homogeneous form.
+    H_inv /= H_inv[-1, -1]
+
+    return H_inv
 
 
 def decompose(H):
@@ -419,16 +473,16 @@ def decompose(H):
 
     return scale, shear, rotation, offset
 
-########################
+#################################################
 
 
-def chain(*matrices):
+def _chain_sequence(*matrices):
     """
-    Chain together a series of transformation matrices.
+    Chain together a sequence of transformation matrices.
 
     Parameters
     ----------
-    matrices : Sequence of (3, 3) and/or (4, 4) transformations.
+    matrices : Sequence of (3, 3) transformations.
 
     Notes
     -----
@@ -440,10 +494,10 @@ def chain(*matrices):
     H : Concatenation of input transformation matrices, (3, 3)
 
     """
-    H = np.identity(3)
+    H = identity()
 
     for Q in matrices:
-        if not transform_is_valid(Q):
+        if not is_valid(Q):
             raise ValueError('Invalid transform Q: {}'.format(Q))
 
         H = Q.dot(H)
@@ -454,54 +508,59 @@ def chain(*matrices):
     return H
 
 
-def invert(H):
+def _is_sequence_of_3x3(value):
     """
-    Invert supplied transform matrix.  Normalize output array to unit homography scale factor, e.g.
-    H[-1, -1] = 1.0.  Therefore this inverse function is not the same as np.linalg.inv().
-
-    Parameters
-    ----------
-    H : Transform matrix
-
-    Returns
-    -------
-    H_inv : Inverse of matrix H
-
+    Helper function to answer the question: is the supplied data a 3x3 array, or is it a sequence
+    of such arrays?
     """
+    if is_valid(value):
+        # Checks out fine as an array, so it's certainly not a sequence of arrays.
+        return False
 
-    if not transform_is_valid(H):
-        raise ValueError('Invalid transform H: {}'.format(H))
+    # Assume input value is iterable and then check each item.
+    try:
+        for v in value:
+            if not is_valid(v):
+                # This is not a valid transform.
+                return False
 
-    H_inv = np.linalg.inv(H)
+    except TypeError:
+        # Assumption was wrong, input data is not a sequence of things.
+        return False
 
-    # Normalize result to proper homogeneous form.
-    H_inv /= H_inv[-1, -1]
-
-    return H_inv
+    # If we got this far then it must be a sequence of arrays.
+    return True
 
 
 def apply(H, points_in):
     """
-    Apply transform to data points.
+    Apply transform(s) to data points.
 
     Parameters
     ----------
+    H : a 3x3 array or a sequence of such arrays.
+
     points : array_like
         Two dimensional array with shape (num_points, 2) or (num_points, 3).
         *or*
         One dimensional array with shape (2,) or (3,).
 
     """
-    if not transform_is_valid(H):
+    if _is_sequence_of_3x3(H):
+        H = _chain_sequence(H)
+
+    if not is_valid(H):
         raise ValueError('Invalid transform H: {}'.format(H))
 
-    original_homog = is_homogeneous(points_in)
+    flag_homog = is_homogeneous(points_in)
     points_in = force_homogeneous(points_in)
 
-    points_out = data_in.dot(H)
+    # Do it!
+    points_out = H.dot(points_in.T).T
 
-    if not original_homog:
-        points_out = cartesian(points_out)
+    if not flag_homog:
+        # Convert back to original Cartesian space.
+        points_out = force_cartesian(points_out)
 
     return points_out
 
