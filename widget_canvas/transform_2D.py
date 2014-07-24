@@ -157,7 +157,7 @@ def force_cartesian(points):
     return points_cart
 
 
-def is_valid(H):
+def is_valid(H, reason=False):
     """
     Check that supplied transform matrix has proper shape and structure.
 
@@ -171,23 +171,59 @@ def is_valid(H):
 
     """
     H = np.asarray(H)
+
+    ###############
     if H.ndim != 2:
-        return False
+        msg = 'not 2D array'
 
+        if reason:
+            return False, msg
+        else:
+            return False
+
+    ###############
     if not (H.shape[0] == 3 and H.shape[1] == 3):
-        return False
+        msg = 'not 3x3 array'
+        if reason:
+            return False, msg
+        else:
+            return False
 
+    ###############
     eps = 1.e-6
     val = H[-1, -1]
-    if abs(val - 1.) > eps:
-        return False
+    try:
+        if abs(val - 1.) > eps:
+            msg = 'bottom-right element must be 1'
+            if reason:
+                return False, msg
+            else:
+                return False
 
+    except ValueError:
+        msg = 'array element is not a scalar'
+        if reason:
+            return False, msg
+        else:
+            return False
+
+    ###############
     # Singular?
     if is_singular(H):
-        return False
+        msg = 'matrix is singular'
+        if reason:
+            return False, msg
+        else:
+            return False
 
+    ###############
     # Everything checks out fine.
-    return True
+    if reason:
+        msg = 'everything is fine'
+
+        return True, msg
+    else:
+        return True
 
 
 def is_singular(H):
@@ -294,14 +330,13 @@ def scale(factor):
     return H
 
 
-def shear(angle, direction):
+def shear(factor, angle):
     """
     Build transform to shear by given angle.
 
     Parameters
     ----------
-    angle : Shear angle (radians)
-    direction : 2D shear direction vector in XY plane.
+    sx, sy : shear factors for X and Y directions.
 
     Returns
     -------
@@ -316,7 +351,9 @@ def shear(angle, direction):
     The shear plane defines the 2D space where distances between two points are unaffected by the
     shear transform.  For 2D problems the shear plane may be any plane orthogonal to the XY plane.
     This plane is defined by two items: a point in the XY plane and a vector normal to the shear
-    plane (also defined in the XY plane).
+    plane (also defined in the XY plane for 2D problems).  For convenience we define the direction
+    vector as one constrained to lie within the XY plane and within the shear plane.  Thus the
+    direction vector is orthogoinal to the above normal vector.
 
     A point P in the XY plane is transformed by the shear matrix into P" such that the vector P-P"
     is parallel to the direction vector and the angle is defined by P-P'-P", where P' is the
@@ -325,17 +362,24 @@ def shear(angle, direction):
     In 2D, it is best to set the reference point to the origin and let the shear normal be computed
     from the supplied parameters.
 
+    In the end its really just easier to think of this in terms of X and Y shear factors: sx and
+    sy.
+
     """
-    tangle = np.tan(angle)
-    direction = np.asarray([direction[0], direction[1], 0])
-
-    normal = np.asarray([0., 0., 1.])
+    # tangle = np.tan(angle)
+    # direction = np.asarray([direction[0], direction[1], 0])
+    # normal = np.asarray([0., 0., 1.])
     # point = np.zeros(3)
-
-    H = identity()
     # S = tangle * np.outer(direction, normal)
-    S = -tangle * np.dot(point, normal) * direction
-    print(S)
+    # # S = -tangle * np.dot(point, normal) * direction
+
+    Hs = identity()
+    Hs[0, 1] = factor
+
+    Hr = rotate(angle)
+    Hmr = rotate(-angle)
+
+    H = chain(Hr, Hs, Hmr)
 
     return H
 
@@ -385,8 +429,9 @@ def invert(H):
 
     """
 
-    if not is_valid(H):
-        raise ValueError('Invalid transform H: {}'.format(H))
+    ok, msg = is_valid(H, reason=True)
+    if not ok:
+        raise ValueError('Invalid transform H: {}.  Reason: {:s}'.format(H, msg))
 
     H_inv = np.linalg.inv(H)
 
@@ -476,9 +521,10 @@ def decompose(H):
 #################################################
 
 
-def _chain_sequence(*matrices):
+def chain(*matrices):
     """
-    Chain together a sequence of transformation matrices.
+    Chain together a sequence of transformation matrices.  The first entry in the supplied set of
+    transform is the first to be applied to data.
 
     Parameters
     ----------
@@ -497,8 +543,9 @@ def _chain_sequence(*matrices):
     H = identity()
 
     for Q in matrices:
-        if not is_valid(Q):
-            raise ValueError('Invalid transform Q: {}'.format(Q))
+        flag, reason = is_valid(Q, reason=True)
+        if not flag:
+            raise ValueError('Invalid transform Q: {}.  Reason: {}'.format(Q, reason))
 
         H = Q.dot(H)
 
@@ -547,7 +594,7 @@ def apply(H, points_in):
 
     """
     if _is_sequence_of_3x3(H):
-        H = _chain_sequence(H)
+        H = chain(H)
 
     if not is_valid(H):
         raise ValueError('Invalid transform H: {}'.format(H))

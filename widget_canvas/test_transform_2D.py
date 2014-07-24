@@ -29,7 +29,8 @@ Kinds of tests:
     self.assertRaises(Exception, some_func, arg, arg_nother)
 
 
-    numpy.testing.assert_allclose(actual, desired, rtol=1e-07, atol=0, err_msg='', verbose=True)
+    np.testing.assert_equal(A, B)
+    np.testing.assert_allclose(actual, desired, rtol=1e-07, atol=0, err_msg='', verbose=True)
 """
 
 #################################################
@@ -43,6 +44,7 @@ class Test_Basic_Stuff(unittest.TestCase):
         pass
 
     def test_is_homogeneous_single(self):
+        """is it homogeneous"""
         points_A = [1.0, 2.1]
 
         points_B = [1.0, 2.1, 1.0]
@@ -54,6 +56,7 @@ class Test_Basic_Stuff(unittest.TestCase):
         self.assertTrue(flag_B)
 
     def test_is_homogeneous_multi(self):
+        """is the data homogeneous"""
         points_A = [[1.0, 2.1],
                     [1.7, 4.4],
                     [5.4, 6.0],
@@ -73,6 +76,7 @@ class Test_Basic_Stuff(unittest.TestCase):
         self.assertTrue(flag_B)
 
     def test_invalid_homogeneous(self):
+        """is data invalid homogeneous"""
         points_A = [1.0, 2.1, 0.0]
         points_B = [1.0, 2.1, 2.0]
 
@@ -87,6 +91,8 @@ class Test_Basic_Stuff(unittest.TestCase):
         self.assertRaises(ValueError, transform_2D.is_homogeneous, points_C)
 
     def test_force_homogeneous_single(self):
+        """force points to homogeneous form"""
+
         points_A = [1.0, 2.1]
 
         points_B = [1.0, 2.1, 1.0]
@@ -101,6 +107,7 @@ class Test_Basic_Stuff(unittest.TestCase):
         self.assertTrue(flag_B)
 
     def test_force_homogeneous_multi(self):
+        """force points to homogeneous form"""
         points_A = [[1.0, 2.1],
                     [1.7, 4.4],
                     [5.4, 6.0],
@@ -123,6 +130,7 @@ class Test_Basic_Stuff(unittest.TestCase):
         self.assertTrue(flag_B)
 
     def test_force_cartesian_single(self):
+        """force points to cartesian form"""
         points_A = [1.0, 2.1]
 
         points_B = [1.0, 2.1, 1.0]
@@ -137,6 +145,7 @@ class Test_Basic_Stuff(unittest.TestCase):
         self.assertFalse(flag_B)
 
     def test_force_cartesian_multi(self):
+        """force points to cartesian form"""
         points_A = [[1.0, 2.1],
                     [1.7, 4.4],
                     [5.4, 6.0],
@@ -164,10 +173,19 @@ class Test_Basic_Stuff(unittest.TestCase):
         flag = transform_2D.is_valid(H)
         self.assertTrue(flag)
 
-    def test_is_not_valid(self):
+    def test_is_not_valid_A(self):
         H = np.zeros(9).reshape(3, 3)
 
         flag = transform_2D.is_valid(H)
+        self.assertFalse(flag)
+
+    def test_is_not_valid_B(self):
+        I1 = transform_2D.identity()
+        I2 = transform_2D.identity()
+
+        A = [I1, I2]
+
+        flag = transform_2D.is_valid(A)
         self.assertFalse(flag)
 
     def test_is_singular(self):
@@ -211,6 +229,7 @@ class Test_Apply(unittest.TestCase):
         pass
 
     def test_apply_identity(self):
+        """apply identity matrix"""
         I = transform_2D.identity()
 
         P1 = np.asarray((1.1, 1.1))
@@ -229,6 +248,7 @@ class Test_Apply(unittest.TestCase):
         np.testing.assert_equal(P3, Q3)
 
     def test_apply_scale(self):
+        """apply scale factor"""
         value = 1.5
 
         H = transform_2D.identity()
@@ -241,6 +261,7 @@ class Test_Apply(unittest.TestCase):
         np.testing.assert_equal(P1*value, Q1)
 
     def test_apply_offset(self):
+        """apply an offset"""
         value = 2.2
 
         H = transform_2D.identity()
@@ -255,7 +276,7 @@ class Test_Apply(unittest.TestCase):
 #################################################
 
 
-class Test_Apply_Chain(unittest.TestCase):
+class Test_Chain(unittest.TestCase):
     def setUp(self):
         points = [[0.5, 0.5],
                   [1.0, 1.0],
@@ -275,6 +296,7 @@ class Test_Apply_Chain(unittest.TestCase):
         pass
 
     def test_is_sequence(self):
+        """identify a sequence of transforms"""
         I1 = transform_2D.identity()
         I2 = transform_2D.identity()
         I3 = transform_2D.identity()
@@ -317,39 +339,69 @@ class Test_Apply_Chain(unittest.TestCase):
         value = transform_2D._is_sequence_of_3x3(A)
         self.assertFalse(value)
 
-    # def test_build_chain(self):
+    def test_chain_rotate(self):
+        """chain multiple rorations"""
+        a = np.deg2rad(5.)
 
-    #     Ha = transform_2D.transform.rotation(a)
-    #     Ha2 = projections.transform.rotation(a*2)
+        Ha = transform_2D.rotate(a)
+        Ha2 = transform_2D.rotate(a*2)
 
-    #     Hz = projections.transform.concatenate(Ha, Ha)
+        Hz = transform_2D.chain(Ha, Ha)
 
-    #     val = np.sum((Hz - Ha2)**2)
-    #     self.assertAlmostEqual(val, 0)
+        np.testing.assert_allclose(Hz, Ha2)
 
-    def test_apply_scale(self):
-        value = 1.5
+    def test_chain_offset(self):
+        """chain multiplke offsets"""
+        ax = 5.
+        ay = -.1
+        bx = 0.3
+        by = -1.1
 
-        H = transform_2D.identity()
-        H[0, 0] = value
-        H[1, 1] = value
+        Ha = transform_2D.offset((ax, ay))
+        Hb = transform_2D.offset((bx, by))
 
-        P1 = self.points
-        Q1 = transform_2D.apply(H, P1)
+        Hab = transform_2D.chain(Ha, Hb)
 
-        np.testing.assert_equal(P1*value, Q1)
+        o = ax + bx, ay + by
+        Hz = transform_2D.offset(o)
 
-    def test_apply_offset(self):
-        value = 2.2
+        np.testing.assert_allclose(Hz, Hab)
 
-        H = transform_2D.identity()
-        H[0, 2] = value
-        H[1, 2] = value
+    def test_chain_scale_offset(self):
+        """order of operations"""
+        ax = 0.5
+        ay = -.1
 
-        P1 = self.points
-        Q1 = transform_2D.apply(H, P1)
+        s = .5
 
-        np.testing.assert_equal(P1 + value, Q1)
+        Ha = transform_2D.offset((ax, ay))
+        Hs = transform_2D.scale(s)
+
+        Has = transform_2D.chain(Hs, Ha)
+
+        value = [Has[0, 2], Has[1, 2]]
+        np.testing.assert_allclose([ax, ay], value)
+
+        value = [Has[0, 0], Has[1, 1]]
+        np.testing.assert_allclose([s, s], value)
+
+    def test_chain_offset_scale(self):
+        """order of operations"""
+        ax = 0.5
+        ay = -.1
+
+        s = 0.5
+
+        Ha = transform_2D.offset((ax, ay))
+        Hs = transform_2D.scale(s)
+
+        Has = transform_2D.chain(Ha, Hs)
+
+        value = [Has[0, 2], Has[1, 2]]
+        np.testing.assert_allclose([ax*s, ay*s], value)
+
+        value = [Has[0, 0], Has[1, 1]]
+        np.testing.assert_allclose([s, s], value)
 
 #################################################
 
@@ -408,26 +460,68 @@ class Test_Build_Transforms(unittest.TestCase):
         self.assertAlmostEqual(H[1, 1], fac[1])
         self.assertAlmostEqual(H[2, 2], 1)
 
-    def test_shear(self):
-        a = np.deg2rad(5.)
-        c = np.cos(a)
-        s = np.sin(a)
+    def test_shear_x(self):
+        sx = 1.1
+        sy = 0
 
-        d = [0., 1.]
-        H = transform_2D.shear(a, d)
+        H = transform_2D.shear(sx, sy)
 
         self.assertTrue(transform_2D.is_valid(H))
 
-        self.assertAlmostEqual(H[1, 0], -0.08748866)
-        self.assertAlmostEqual(H[0, 1], 0)
+        self.assertEqual(H[0, 1], sx)
+        self.assertEqual(H[1, 0], sy)
 
-        d = [1., 0., 1.]
-        H = transform_2D.shear(a, d)
+        I = transform_2D.identity()
+        H[0, 1] -= sx
+
+        np.testing.assert_equal(H, I)
+
+    def test_shear_y(self):
+        sx = 0
+        sy = -2.1
+
+        H = transform_2D.shear(sx, sy)
 
         self.assertTrue(transform_2D.is_valid(H))
+        self.assertEqual(H[0, 1], sx)
+        self.assertEqual(H[1, 0], sy)
 
-        self.assertAlmostEqual(H[1, 0], 0)
-        self.assertAlmostEqual(H[0, 1], 0.08748866)
+        I = transform_2D.identity()
+        H[1, 0] -= sy
+
+        np.testing.assert_equal(H, I)
+
+    def test_shear_1_1(self):
+        sx = 1.
+        sy = 1.
+        H = transform_2D.shear(sx, sy)
+
+        self.assertFalse(transform_2D.is_valid(H))
+        # self.assertEqual(H[0, 1], sx)
+        # self.assertEqual(H[1, 0], sy)
+
+        # I = transform_2D.identity()
+        # H[0, 1] -= sx
+        # H[1, 0] -= sy
+
+        # np.testing.assert_equal(H, I)
+
+    def test_shear_xy(self):
+        sx = -1.
+        sy = -1.1
+
+        H = transform_2D.shear(sx, sy)
+
+        self.assertTrue(transform_2D.is_valid(H))
+        self.assertEqual(H[0, 1], sx)
+        self.assertEqual(H[1, 0], sy)
+
+        I = transform_2D.identity()
+        H[0, 1] -= sx
+        H[1, 0] -= sy
+
+        np.testing.assert_equal(H, I)
+
 
 #     def test_perspective(self):
 
