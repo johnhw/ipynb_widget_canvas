@@ -56,13 +56,13 @@ def is_homogeneous(points):
     if points.ndim == 1:
         # Vector.
         if points.size == 2:
-            # Cartesian
+            # Cartesian.
             return False
         else:
             # Should be homogeneous
             value = points[2]
             if value != 1:
-                raise ValueError('Supplied data is not valid homogeneous.')
+                raise ValueError('Supplied data is not valid homogeneous: {}'.format(value))
 
             # Yes, homogeneous.
             return True
@@ -373,24 +373,24 @@ def shear(factor, angle):
     # S = tangle * np.outer(direction, normal)
     # # S = -tangle * np.dot(point, normal) * direction
 
-    Hs = identity()
-    Hs[0, 1] = factor
+    Hsx = identity()
+    Hsx[0, 1] = factor
 
-    Hr = rotate(angle)
-    Hmr = rotate(-angle)
+    Hnr = rotate(-angle)
+    Hpr = rotate(angle)
 
-    H = chain(Hr, Hs, Hmr)
+    H = chain(Hnr, Hsx, Hpr)
 
     return H
 
 
-def perspective(values):
+def perspective(pa, pb):
     """
     Build transform containing perspective partition data.
 
     Parameters
     ----------
-    values : vector size 2
+    pa, pb : perspective scale parameters
 
     Returns
     -------
@@ -398,12 +398,10 @@ def perspective(values):
 
     """
 
-    H = np.identity(3)
+    H = identity()
 
-    if len(values) == 2:
-        H[2, :2] = values
-    else:
-        raise ValueError('Invalid input values: {}'.format(values))
+    H[2, 0] = pa
+    H[2, 1] = pb
 
     # H[3, 3] = values[-1]
     # H /= H[3, 3]
@@ -605,8 +603,12 @@ def apply(H, points_in):
     # Do it!
     points_out = H.dot(points_in.T).T
 
+    # Normalize.
+    if popints
+    points_out /= points_out[:, 2].reshape(-1, 1)
+
+    # Convert back to original Cartesian space?
     if not flag_homog:
-        # Convert back to original Cartesian space.
         points_out = force_cartesian(points_out)
 
     return points_out
