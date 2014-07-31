@@ -485,7 +485,7 @@ class Test_Build_Transforms(unittest.TestCase):
 
         np.testing.assert_almost_equal(H, H0)
 
-    def test_perspective(self):
+    def test_perspective_A(self):
         pa = 0.0
         pb = 1.1
         H = transform_2D.perspective(pa, pb)
@@ -496,39 +496,69 @@ class Test_Build_Transforms(unittest.TestCase):
 
         np.testing.assert_almost_equal(H, H0)
 
-#     def test_shape_match_array(self):
-#         f = 2.
-#         g = 3.
-#         A = 10
-#         B = 20
-#         C = A*f
-#         D = B*g
-#         img_src = np.zeros(A*B).reshape(A, B)
-#         img_dst = np.zeros(C*D).reshape(C, D)
+    def test_perspective_B(self):
+        pa = 0.9
+        pb = 0.0
+        H = transform_2D.perspective(pa, pb)
 
-#         H = projections.transform.shape_match(img_src, img_dst)
+        H0 = [[1., 0., 0.],
+              [0., 1., 0.],
+              [pa, pb, 1.]]
 
-#         # print(H)
-#         self.assertTrue(H[0, 0] == g)
-#         self.assertTrue(H[1, 1] == f)
-#         self.assertTrue(H[2, 2] == 1)
+        np.testing.assert_almost_equal(H, H0)
 
-#     def test_shape_match_shape(self):
-#         f = 2.
-#         g = 3.
-#         A = 10
-#         B = 20
-#         C = A*f
-#         D = B*g
-#         img_src = np.zeros(A*B).reshape(A, B)
-#         img_dst = np.zeros(C*D).reshape(C, D)
+    def test_perspective_C(self):
+        pa = 0.5
+        pb = 0.25
+        H = transform_2D.perspective(pa, pb)
 
-#         H = projections.transform.shape_match(img_src.shape, img_dst.shape)
+        H0 = [[1., 0., 0.],
+              [0., 1., 0.],
+              [pa, pb, 1.]]
 
-#         # print(H)
-#         self.assertTrue(H[0, 0] == g)
-#         self.assertTrue(H[1, 1] == f)
-#         self.assertTrue(H[2, 2] == 1)
+        np.testing.assert_almost_equal(H, H0)
+
+    def test_shape_match_array(self):
+        f = 2.
+        g = 3.
+        A = 10
+        B = 20
+        C = A*f
+        D = B*g
+        img_src = np.zeros(A*B).reshape(A, B)
+        img_dst = np.zeros(C*D).reshape(C, D)
+
+        H = transform_2D.scale_shape_match(img_src, img_dst)
+
+        self.assertTrue(transform_2D.is_valid(H))
+        self.assertTrue(H[0, 0] == f)
+        self.assertTrue(H[1, 1] == g)
+        self.assertTrue(H[0, 1] == 0)
+        self.assertTrue(H[1, 0] == 0)
+        self.assertTrue(H[2, 0] == 0)
+        self.assertTrue(H[2, 1] == 0)
+        self.assertTrue(H[2, 2] == 1)
+
+    def test_shape_match_shape(self):
+        f = 2.
+        g = 3.5
+        A = 10
+        B = 20
+        C = A*f
+        D = B*g
+        img_src = np.zeros(A*B).reshape(A, B)
+        img_dst = np.zeros(C*D).reshape(C, D)
+
+        H = transform_2D.scale_shape_match(img_src.shape, img_dst.shape)
+
+        self.assertTrue(transform_2D.is_valid(H))
+        self.assertTrue(H[0, 0] == f)
+        self.assertTrue(H[1, 1] == g)
+        self.assertTrue(H[0, 1] == 0)
+        self.assertTrue(H[1, 0] == 0)
+        self.assertTrue(H[2, 0] == 0)
+        self.assertTrue(H[2, 1] == 0)
+        self.assertTrue(H[2, 2] == 1)
 
 
 # class Test_Decompose_Transforms(unittest.TestCase):

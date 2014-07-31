@@ -604,8 +604,10 @@ def apply(H, points_in):
     points_out = H.dot(points_in.T).T
 
     # Normalize.
-    if popints
-    points_out /= points_out[:, 2].reshape(-1, 1)
+    if points_out.ndim == 1:
+        points_out /= points_out[2]
+    elif points_out.ndim == 2:
+        points_out /= points_out[:, 2].reshape(-1, 1)
 
     # Convert back to original Cartesian space?
     if not flag_homog:
@@ -675,3 +677,62 @@ def scale_shape_match(img_src, img_dst):
     #                 [0., 0., 1.]], dtype=np.float32)
 
     return H
+
+
+def decompose(H):
+    """
+    Decompose transform matrix into discrete components.
+
+    M = [m11, m12, m21, m22, m13, m23]
+          0    1    2    3    4    5
+          A    C    B    D
+
+    float A = aMatrix.xx,
+          B = aMatrix.yx,
+          C = aMatrix.xy,
+          D = aMatrix.yy;
+    """
+
+    if self.is_singular():
+        raise ValueError('Singular matrix.')
+
+    # Working copy of current transform values.
+    m11, m12, m21, m22, m13, m23 = self.values
+
+    scale_x = (m11**2 + m21**2)**.5
+    m11 /= scale_x
+    m21 /= scale_x
+
+    shear = m11*m12 + m21*m22
+    m12 -= m11*shear
+    m22 -= m21*shear
+
+    scale_y = (m12**2 + m22**2)**.5
+    m12 /= scale_y
+    m22 /= scale_y
+    shear /= scale_y
+
+    scale = scale_x, scale_y
+
+    # m11*m22 - m21*m12 should now be 1 or -1
+    value_test = m11*m22 - m21*m12
+    eps = 1.e-6
+    if abs(value_test - 1) > eps:
+        raise ValueError('Invalid determinant: {:f}'.format(value_test))
+
+    if m11*m22 < m21*m12:
+        # Flip signs.
+        m11 = -m11
+        m21 = -m21
+        m12 = -m12
+        m22 = -m22
+        shear = -shear
+        scale_x = -scale_x
+
+    # Angle of rotation.
+    rotation = np.arctan2(m21, m11)
+
+    # Offsets.
+    offset = m13, m23
+
+    return scale, shear, rotation, offset
