@@ -542,10 +542,12 @@ class Test_Build_Transforms(unittest.TestCase):
     def test_shape_match_shape(self):
         f = 2.
         g = 3.5
+
         A = 10
         B = 20
         C = A*f
         D = B*g
+
         img_src = np.zeros(A*B).reshape(A, B)
         img_dst = np.zeros(C*D).reshape(C, D)
 

@@ -439,82 +439,82 @@ def invert(H):
     return H_inv
 
 
-def decompose(H):
-    """
-    Decompose transform matrix into component parameters.
+# def decompose(H):
+#     """
+#     Decompose transform matrix into component parameters.
 
-    Parameters
-    ----------
-    H : Transform matrix
+#     Parameters
+#     ----------
+#     H : Transform matrix
 
-    Returns
-    -------
-    scale : X and Y scale factors
-    shear : X and Y shear components
-    angle : rotation angle
-    offset : X and Y translation distances
+#     Returns
+#     -------
+#     scale : X and Y scale factors
+#     shear : X and Y shear components
+#     angle : rotation angle
+#     offset : X and Y translation distances
 
 
-    Notes:
+#     Notes:
 
-    M = [m11, m12, m21, m22, m13, m23]
-          0    1    2    3    4    5
-          A    C    B    D
+#     M = [m11, m12, m21, m22, m13, m23]
+#           0    1    2    3    4    5
+#           A    C    B    D
 
-    float A = aMatrix.xx,
-          B = aMatrix.yx,
-          C = aMatrix.xy,
-          D = aMatrix.yy;
-    """
+#     float A = aMatrix.xx,
+#           B = aMatrix.yx,
+#           C = aMatrix.xy,
+#           D = aMatrix.yy;
+#     """
 
-    if is_singular():
-        raise ValueError('Singular matrix.')
+#     if is_singular():
+#         raise ValueError('Singular matrix.')
 
-    # Transform matrix elements.
-    m11 = H[0, 0]
-    m12 = H[0, 1]
-    m21 = H[1, 0]
-    m22 = H[1, 1]
-    m13 = H[0, 2]
-    m23 = H[1, 2]
+#     # Transform matrix elements.
+#     m11 = H[0, 0]
+#     m12 = H[0, 1]
+#     m21 = H[1, 0]
+#     m22 = H[1, 1]
+#     m13 = H[0, 2]
+#     m23 = H[1, 2]
 
-    scale_x = (m11**2 + m21**2)**.5
-    m11 /= scale_x
-    m21 /= scale_x
+#     scale_x = (m11**2 + m21**2)**.5
+#     m11 /= scale_x
+#     m21 /= scale_x
 
-    shear = m11*m12 + m21*m22
-    m12 -= m11*shear
-    m22 -= m21*shear
+#     shear = m11*m12 + m21*m22
+#     m12 -= m11*shear
+#     m22 -= m21*shear
 
-    scale_y = (m12**2 + m22**2)**.5
-    m12 /= scale_y
-    m22 /= scale_y
-    shear /= scale_y
+#     scale_y = (m12**2 + m22**2)**.5
+#     m12 /= scale_y
+#     m22 /= scale_y
+#     shear /= scale_y
 
-    scale = scale_x, scale_y
+#     scale = scale_x, scale_y
 
-    # m11*m22 - m21*m12 should now be 1 or -1
-    value_test = m11*m22 - m21*m12
-    eps = 1.e-6
-    if abs(value_test - 1) > eps:
-        raise ValueError('Invalid determinant: {:f}'.format(value_test))
+#     # m11*m22 - m21*m12 should now be 1 or -1
+#     value_test = m11*m22 - m21*m12
+#     eps = 1.e-6
+#     if abs(value_test - 1) > eps:
+#         raise ValueError('Invalid determinant: {:f}'.format(value_test))
 
-    if m11*m22 < m21*m12:
-        # Flip signs.
-        m11 = -m11
-        m21 = -m21
-        m12 = -m12
-        m22 = -m22
-        shear = -shear
-        scale_x = -scale_x
+#     if m11*m22 < m21*m12:
+#         # Flip signs.
+#         m11 = -m11
+#         m21 = -m21
+#         m12 = -m12
+#         m22 = -m22
+#         shear = -shear
+#         scale_x = -scale_x
 
-    # Angle of rotation.
-    rotation = np.arctan2(m21, m11)
+#     # Angle of rotation.
+#     rotation = np.arctan2(m21, m11)
 
-    # Offsets.
-    offset = m13, m23
+#     # Offsets.
+#     offset = m13, m23
 
-    return scale, shear, rotation, offset
+#     return scale, shear, rotation, offset
 
 #################################################
 
