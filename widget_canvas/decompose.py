@@ -37,6 +37,15 @@ import math
 import numpy as np
 
 
+
+"""
+See this paper:
+Projective Transformations for Image Transition Animations
+
+Setion 3.1  using QR decomposition
+
+
+"""
 def decompose_matrix_3D(matrix):
     """Return sequence of transformations from transformation matrix.
     """
@@ -114,9 +123,10 @@ def decompose_matrix_2D(matrix):
 
     if any(abs(M[:2, 2]) > _EPS):
         perspective = np.dot(M[:, 2], np.linalg.inv(P.T))
+        perspective = perspective[:2]
         M[:, 2] = 0.0, 0.0, 1.0
     else:
-        perspective = np.array([0.0, 0.0, 1.0])
+        perspective = np.array([0.0, 0.0])
 
     translate = M[2, :2].copy()
     M[2, :2] = 0.0

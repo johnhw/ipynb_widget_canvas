@@ -4,6 +4,7 @@ from __future__ import division, print_function, unicode_literals
 import unittest
 import numpy as np
 
+import transform_2D
 import decompose
 
 """
@@ -35,43 +36,75 @@ Kinds of tests:
 #################################################
 
 
-class Test_Basic_Stuff(unittest.TestCase):
+class Test_Decompose(unittest.TestCase):
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
 
-    def test_is_homogeneous_single(self):
-        pass
+    def test_decompose_scale_1(self):
+        s = 0.5
+        H = transform_2D.scale(s)
 
-# class Test_Decompose_Transforms(unittest.TestCase):
-#     def setUp(self):
-#         pass
+        values = decompose.decompose_matrix_2D(H)
 
-#     def tearDown(self):
-#         pass
+        scale, shear, angle, translate, perspective = values
 
-#     def test_decompose_scale_scalar(self):
-#         p_scale = 0.5
-#         H_scale = projections.transform.scale(p_scale)
-#         val = projections.transform.decompose(H_scale)
+        np.testing.assert_equal(scale, s)
+        np.testing.assert_equal(shear, [0, 0])
+        np.testing.assert_equal(angle, 0)
+        np.testing.assert_equal(translate, [0, 0])
+        np.testing.assert_equal(perspective, [0, 0])
 
-#         scale, shear, angles, translate, perspective = val
+    def test_decompose_scale_2(self):
+        s = 0.5, 0.1
+        H = transform_2D.scale(s)
 
-#         metric = (scale == p_scale).all()
-#         self.assertTrue(metric)
+        values = decompose.decompose_matrix_2D(H)
 
-#     def test_decompose_scale_2vec(self):
-#         p_scale = 0.5, 0.5
-#         H = projections.transform.scale(p_scale)
-#         params = projections.transform.decompose(H)
+        scale, shear, angle, translate, perspective = values
 
-#         q_scale, q_shear, q_angles, q_translate, q_perspective = params
+        np.testing.assert_equal(scale, s)
+        np.testing.assert_equal(shear, [0, 0])
+        np.testing.assert_equal(angle, 0)
+        np.testing.assert_equal(translate, [0, 0])
+        np.testing.assert_equal(perspective, [0, 0])
 
-#         vtest = [0.5, 0.5, 1.]
-#         metric = (q_scale == vtest).all()
-#         self.assertTrue(metric)
+    def test_decompose_scale_shear(self):
+        factor = 0.5
+        angle = np.deg2rad(45)
+        H = transform_2D.shear(factor, angle)
+
+        values = decompose.decompose_matrix_2D(H)
+        print(values)
+
+        scale, shear, angle, translate, perspective = values
+
+        np.testing.assert_equal(scale, 1)
+        np.testing.assert_equal(shear, [factor, angle])
+        np.testing.assert_equal(angle, 0)
+        np.testing.assert_equal(translate, [0, 0])
+        np.testing.assert_equal(perspective, [0, 0])
+
+
+    # def test_shear_C(self):
+    #     factor = -0.5
+    #     angle = np.deg2rad(45)
+
+    #     H = transform_2D.shear(factor, angle)
+
+    #     self.assertTrue(transform_2D.is_valid(H))
+
+    #     H0 = [[1.25, -.25, 0.0],
+    #           [0.25, 0.75, 0.0],
+    #           [0.0, 0.0, 1.0]]
+
+    #     np.testing.assert_almost_equal(H, H0)
+
+
+
+
 
 #     def test_decompose_shear(self):
 #         p_shear_angle = np.deg2rad(5.)
