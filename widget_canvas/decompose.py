@@ -36,18 +36,16 @@ from __future__ import division, print_function
 import math
 import numpy as np
 
-
-
 """
 See this paper:
 Projective Transformations for Image Transition Animations
-
-https://drive.google.com/file/d/1GRdyD2W0Bitws6p7fzngD-ZY4UrJwXx4wr79YtepQkubaHjf96j_q2rt1ZkQ5-mBZOPg3g4JaAZJ2AcQ/edit?usp=sharing
 
 Setion 3.1  using QR decomposition
 
 
 """
+
+
 def decompose_matrix_3D(matrix):
     """Return sequence of transformations from transformation matrix.
     """
