@@ -330,7 +330,7 @@ def scale(factor):
     return H
 
 
-def shear(factor, angle):
+def shear(shear_x, shear_y):
     """
     Build transform to shear by given angle.
 
@@ -374,12 +374,12 @@ def shear(factor, angle):
     # # S = -tangle * np.dot(point, normal) * direction
 
     Hsx = identity()
-    Hsx[0, 1] = factor
+    Hsy = identity()
 
-    Hnr = rotate(-angle)
-    Hpr = rotate(angle)
+    Hsx[0, 1] = shear_x
+    Hsy[1, 0] = shear_y
 
-    H = chain(Hnr, Hsx, Hpr)
+    H = chain(Hsx, Hsy)
 
     return H
 
@@ -521,7 +521,7 @@ def invert(H):
 
 def chain(*matrices):
     """
-    Chain together a sequence of transformation matrices.  The first entry in the supplied set of
+    Chain together a sequence of transformation matrices.  The last entry in the supplied set of
     transform is the first to be applied to data.
 
     Parameters
@@ -540,7 +540,7 @@ def chain(*matrices):
     """
     H = identity()
 
-    for Q in matrices:
+    for Q in matrices[::-1]:
         flag, reason = is_valid(Q, reason=True)
         if not flag:
             raise ValueError('Invalid transform Q: {}.  Reason: {}'.format(Q, reason))

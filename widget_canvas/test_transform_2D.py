@@ -361,7 +361,7 @@ class Test_Chain(unittest.TestCase):
         Ha = transform_2D.offset((ax, ay))
         Hs = transform_2D.scale(s)
 
-        Has = transform_2D.chain(Hs, Ha)
+        Has = transform_2D.chain(Ha, Hs)
 
         value = [Has[0, 2], Has[1, 2]]
         np.testing.assert_allclose([ax, ay], value)
@@ -378,7 +378,7 @@ class Test_Chain(unittest.TestCase):
         Ha = transform_2D.offset((ax, ay))
         Hs = transform_2D.scale(s)
 
-        Has = transform_2D.chain(Ha, Hs)
+        Has = transform_2D.chain(Hs, Ha)
 
         value = [Has[0, 2], Has[1, 2]]
         np.testing.assert_allclose([ax*s, ay*s], value)
