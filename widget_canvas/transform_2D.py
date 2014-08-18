@@ -275,6 +275,9 @@ def offset(offset):
 def rotate(angle, origin=None):
     """
     Build rotation matrix about a point.
+    http://en.wikipedia.org/wiki/Transformation_matrix#Rotation
+
+    Right-hand rule.
 
     Parameters
     ----------
@@ -291,9 +294,9 @@ def rotate(angle, origin=None):
 
     H = np.identity(3)
     H[0, 0] = cosa
-    H[1, 1] = cosa
     H[0, 1] = -sina
     H[1, 0] = sina
+    H[1, 1] = cosa
 
     if not origin is None:
         origin = force_homogeneous(origin)
