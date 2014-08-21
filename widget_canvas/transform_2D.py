@@ -251,7 +251,7 @@ def identity():
     return np.identity(3)
 
 
-def offset(offset):
+def offset(offset, offset_y=None):
     """
     Build translation matrix.
 
@@ -264,6 +264,9 @@ def offset(offset):
     H : Transform matrix
 
     """
+    if offset_y:
+        offset = offset, offset_y
+
     offset = force_homogeneous(offset)
 
     H = np.identity(3)
@@ -308,7 +311,7 @@ def rotate(angle, origin=None):
     return H
 
 
-def scale(factor):
+def scale(factor, factor_y=None):
     """
     Build scaling matrix.
 
@@ -321,6 +324,8 @@ def scale(factor):
     H : Transform matrix
 
     """
+    if factor_y:
+        factor = factor, factor_y
     factor = np.asarray(factor)
 
     if factor.size == 1:
@@ -333,13 +338,13 @@ def scale(factor):
     return H
 
 
-def shear(shear_x, shear_y):
+def shear(shear_y):
     """
     Build transform to shear by given angle.
 
     Parameters
     ----------
-    sx, sy : shear factors for X and Y directions.
+    shear_y : shear factor Y directions.
 
     Returns
     -------
@@ -376,18 +381,18 @@ def shear(shear_x, shear_y):
     # S = tangle * np.outer(direction, normal)
     # # S = -tangle * np.dot(point, normal) * direction
 
-    Hsx = identity()
+    # Hsx = identity()
     Hsy = identity()
 
-    Hsx[0, 1] = shear_x
+    # Hsx[0, 1] = shear_x
     Hsy[1, 0] = shear_y
 
-    H = chain(Hsx, Hsy)
+    # H = chain(Hsx, Hsy)
 
-    return H
+    return Hsy
 
 
-def perspective(pa, pb):
+def perspective(p, py=None):
     """
     Build transform containing perspective partition data.
 
@@ -401,10 +406,13 @@ def perspective(pa, pb):
 
     """
 
+    if py:
+        p = p, py
+
     H = identity()
 
-    H[2, 0] = pa
-    H[2, 1] = pb
+    H[2, 0] = p[0]
+    H[2, 1] = p[1]
 
     # H[3, 3] = values[-1]
     # H /= H[3, 3]
