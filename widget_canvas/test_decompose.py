@@ -43,120 +43,209 @@ class Test_Decompose(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_decompose_scale_1(self):
+    def test_decompose_translate_A1(self):
+        s = 0.1, 10.0
+        H = transform_2D.offset(s)
+
+        as_transforms = False
+        values = decompose.decompose(H, as_transforms=as_transforms)
+
+        # H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        offset, persp, scale, shear, angle = values
+
+        np.testing.assert_almost_equal(offset, s)
+        np.testing.assert_almost_equal(scale, [1, 1])
+        np.testing.assert_almost_equal(shear, 0)
+        np.testing.assert_almost_equal(angle, 0)
+        np.testing.assert_almost_equal(persp, [0, 0])
+
+    def test_decompose_translate_A2(self):
+        s = 0.1, 10.0
+        H = transform_2D.offset(s)
+
+        as_transforms = True
+        values = decompose.decompose(H, as_transforms=as_transforms)
+
+        H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        # offset, persp, scale, shear, angle = values
+
+        I = transform_2D.identity()
+
+        np.testing.assert_almost_equal(H_translate, H)
+        np.testing.assert_almost_equal(H_scale, I)
+        np.testing.assert_almost_equal(H_shear, I)
+        np.testing.assert_almost_equal(H_rotate, I)
+        np.testing.assert_almost_equal(H_perspective, I)
+
+    def test_decompose_scale_A1(self):
         s = 0.5
         H = transform_2D.scale(s)
 
-        values = decompose.decompose_matrix_2D(H)
+        as_transforms = False
+        values = decompose.decompose(H, as_transforms=as_transforms)
 
-        scale, shear, angle, translate, perspective = values
+        # H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        offset, persp, scale, shear, angle = values
 
-        np.testing.assert_equal(scale, s)
-        np.testing.assert_equal(shear, [0, 0])
-        np.testing.assert_equal(angle, 0)
-        np.testing.assert_equal(translate, [0, 0])
-        np.testing.assert_equal(perspective, [0, 0])
+        np.testing.assert_almost_equal(scale, (s, s))
+        np.testing.assert_almost_equal(shear, 0)
+        np.testing.assert_almost_equal(angle, 0)
+        np.testing.assert_almost_equal(offset, [0, 0])
+        np.testing.assert_almost_equal(persp, [0, 0])
 
-    def test_decompose_scale_2(self):
+    def test_decompose_scale_A2(self):
+        s = 0.5
+        H = transform_2D.scale(s)
+
+        as_transforms = True
+        values = decompose.decompose(H, as_transforms=as_transforms)
+
+        H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        # offset, persp, scale, shear, angle = values
+
+        I = transform_2D.identity()
+
+        np.testing.assert_almost_equal(H_translate, I)
+        np.testing.assert_almost_equal(H_scale, H)
+        np.testing.assert_almost_equal(H_shear, I)
+        np.testing.assert_almost_equal(H_rotate, I)
+        np.testing.assert_almost_equal(H_perspective, I)
+
+    def test_decompose_scale_B1(self):
         s = 0.5, 0.1
         H = transform_2D.scale(s)
 
-        values = decompose.decompose_matrix_2D(H)
+        as_transforms = False
+        values = decompose.decompose(H, as_transforms=as_transforms)
 
-        scale, shear, angle, translate, perspective = values
+        # H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        offset, persp, scale, shear, angle = values
 
-        np.testing.assert_equal(scale, s)
-        np.testing.assert_equal(shear, [0, 0])
-        np.testing.assert_equal(angle, 0)
-        np.testing.assert_equal(translate, [0, 0])
-        np.testing.assert_equal(perspective, [0, 0])
+        np.testing.assert_almost_equal(scale, s)
+        np.testing.assert_almost_equal(shear, 0)
+        np.testing.assert_almost_equal(angle, 0)
+        np.testing.assert_almost_equal(offset, [0, 0])
+        np.testing.assert_almost_equal(persp, [0, 0])
 
-    def test_decompose_scale_shear(self):
-        factor = 0.5
-        angle = np.deg2rad(45)
-        H = transform_2D.shear(factor, angle)
+    def test_decompose_scale_B2(self):
+        s = 0.5, 0.1
+        H = transform_2D.scale(s)
 
-        values = decompose.decompose_matrix_2D(H)
-        print(values)
+        as_transforms = True
+        values = decompose.decompose(H, as_transforms=as_transforms)
 
-        scale, shear, angle, translate, perspective = values
+        H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        # offset, persp, scale, shear, angle = values
 
-        np.testing.assert_equal(scale, 1)
-        np.testing.assert_equal(shear, [factor, angle])
-        np.testing.assert_equal(angle, 0)
-        np.testing.assert_equal(translate, [0, 0])
-        np.testing.assert_equal(perspective, [0, 0])
+        I = transform_2D.identity()
 
+        np.testing.assert_almost_equal(H_translate, I)
+        np.testing.assert_almost_equal(H_scale, H)
+        np.testing.assert_almost_equal(H_shear, I)
+        np.testing.assert_almost_equal(H_rotate, I)
+        np.testing.assert_almost_equal(H_perspective, I)
 
-    # def test_shear_C(self):
-    #     factor = -0.5
-    #     angle = np.deg2rad(45)
+    def test_decompose_shear_A1(self):
+        s = 0.55
+        H = transform_2D.shear(s)
 
-    #     H = transform_2D.shear(factor, angle)
+        as_transforms = False
+        values = decompose.decompose(H, as_transforms=as_transforms)
 
-    #     self.assertTrue(transform_2D.is_valid(H))
+        # H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        offset, persp, scale, shear, angle = values
 
-    #     H0 = [[1.25, -.25, 0.0],
-    #           [0.25, 0.75, 0.0],
-    #           [0.0, 0.0, 1.0]]
+        np.testing.assert_almost_equal(offset, [0, 0])
+        np.testing.assert_almost_equal(scale, [1, 1])
+        np.testing.assert_almost_equal(shear, s)
+        np.testing.assert_almost_equal(angle, 0)
+        np.testing.assert_almost_equal(persp, [0, 0])
 
-    #     np.testing.assert_almost_equal(H, H0)
+    def test_decompose_shear_A2(self):
+        s = 0.55
+        H = transform_2D.shear(s)
 
+        as_transforms = True
+        values = decompose.decompose(H, as_transforms=as_transforms)
 
+        H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        # offset, persp, scale, shear, angle = values
 
+        I = transform_2D.identity()
 
+        np.testing.assert_almost_equal(H_translate, I)
+        np.testing.assert_almost_equal(H_scale, I)
+        np.testing.assert_almost_equal(H_shear, H)
+        np.testing.assert_almost_equal(H_rotate, I)
+        np.testing.assert_almost_equal(H_perspective, I)
 
-#     def test_decompose_shear(self):
-#         p_shear_angle = np.deg2rad(5.)
-#         p_shear_direction = [1., 0., 0.]
+    def test_decompose_rotate_A1(self):
+        s = np.pi*0.2
+        H = transform_2D.rotate(s)
 
-#         H = projections.transform.shear(p_shear_angle, p_shear_direction)
-#         params = projections.transform.decompose(H)
+        as_transforms = False
+        values = decompose.decompose(H, as_transforms=as_transforms)
 
-#         q_scale, q_shear, q_angles, q_translate, q_perspective = params
+        # H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        offset, persp, scale, shear, angle = values
 
-#         self.assertTrue(np.tan(p_shear_angle) == q_shear[0])
-#         self.assertTrue((q_shear[1:] == 0).all())
-#         self.assertTrue((q_scale == 1).all())
-#         self.assertTrue((q_angles == 0).all())
-#         self.assertTrue((q_translate == 0).all())
-#         self.assertTrue((q_perspective[:3] == 0).all())
-#         self.assertTrue((q_perspective[3:] == 1).all())
+        np.testing.assert_almost_equal(offset, [0, 0])
+        np.testing.assert_almost_equal(scale, [1, 1])
+        np.testing.assert_almost_equal(shear, 0)
+        np.testing.assert_almost_equal(angle, s)
+        np.testing.assert_almost_equal(persp, [0, 0])
 
-#     def test_decompose_rotate(self):
-#         p_angle = np.deg2rad(5.)
+    def test_decompose_rotate_A2(self):
+        s = np.pi*0.2
+        H = transform_2D.rotate(s)
 
-#         H = projections.transform.rotation(p_angle)
-#         params = projections.transform.decompose(H)
+        as_transforms = True
+        values = decompose.decompose(H, as_transforms=as_transforms)
 
-#         q_scale, q_shear, q_angles, q_translate, q_perspective = params
+        H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        # offset, persp, scale, shear, angle = values
 
-#         self.assertTrue((q_angles[:2] == 0).all())
-#         self.assertAlmostEqual(q_angles[2], p_angle)
+        I = transform_2D.identity()
 
-#         self.assertTrue((q_scale == 1).all())
-#         self.assertTrue((q_shear[1:] == 0).all())
-#         # self.assertTrue((q_angles == 0).all())
-#         self.assertTrue((q_translate == 0).all())
-#         self.assertTrue((q_perspective[:3] == 0).all())
-#         self.assertTrue((q_perspective[3:] == 1).all())
+        np.testing.assert_almost_equal(H_translate, I)
+        np.testing.assert_almost_equal(H_scale, I)
+        np.testing.assert_almost_equal(H_shear, I)
+        np.testing.assert_almost_equal(H_rotate, H)
+        np.testing.assert_almost_equal(H_perspective, I)
 
-#     def test_decompose_translate(self):
-#         v = [5., 0., 0.]
+    def test_decompose_perspective_A1(self):
+        s = 0.1, 0.2
+        H = transform_2D.perspective(s)
 
-#         H = projections.transform.translation(v)
+        as_transforms = False
+        values = decompose.decompose(H, as_transforms=as_transforms)
 
-#         params = projections.transform.decompose(H)
-#         q_scale, q_shear, q_angles, q_translate, q_perspective = params
+        # H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        offset, persp, scale, shear, angle = values
 
-#         self.assertTrue((v == q_translate).all())
+        np.testing.assert_almost_equal(offset, [0, 0])
+        np.testing.assert_almost_equal(scale, [1, 1])
+        np.testing.assert_almost_equal(shear, 0)
+        np.testing.assert_almost_equal(angle, 0)
+        np.testing.assert_almost_equal(persp, s)
 
-#         self.assertTrue((q_scale == 1).all())
-#         self.assertTrue((q_shear[1:] == 0).all())
-#         self.assertTrue((q_angles == 0).all())
-#         # self.assertTrue((q_translate == 0).all())
-#         self.assertTrue((q_perspective[:3] == 0).all())
-#         self.assertTrue((q_perspective[3:] == 1).all())
+    def test_decompose_perspective_A2(self):
+        s = 0.1, 0.2
+        H = transform_2D.perspective(s)
+
+        as_transforms = True
+        values = decompose.decompose(H, as_transforms=as_transforms)
+
+        H_translate, H_scale, H_shear, H_rotate, H_perspective = values
+        # offset, persp, scale, shear, angle = values
+
+        I = transform_2D.identity()
+
+        np.testing.assert_almost_equal(H_translate, I)
+        np.testing.assert_almost_equal(H_scale, I)
+        np.testing.assert_almost_equal(H_shear, I)
+        np.testing.assert_almost_equal(H_rotate, I)
+        np.testing.assert_almost_equal(H_perspective, H)
 
 
 # Standalone.

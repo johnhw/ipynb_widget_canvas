@@ -264,7 +264,7 @@ def offset(offset, offset_y=None):
     H : Transform matrix
 
     """
-    if offset_y:
+    if offset_y is not None:
         offset = offset, offset_y
 
     offset = force_homogeneous(offset)
@@ -324,7 +324,7 @@ def scale(factor, factor_y=None):
     H : Transform matrix
 
     """
-    if factor_y:
+    if factor_y is not None:
         factor = factor, factor_y
     factor = np.asarray(factor)
 
@@ -406,7 +406,7 @@ def perspective(p, py=None):
 
     """
 
-    if py:
+    if py is not None:
         p = p, py
 
     H = identity()

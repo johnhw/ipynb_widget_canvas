@@ -433,6 +433,23 @@ class Test_Build_Transforms(unittest.TestCase):
         self.assertAlmostEqual(H[1, 1], fac)
         self.assertAlmostEqual(H[2, 2], 1)
 
+    def test_scale_single_zero(self):
+        fac = 0.0
+        H = transform_2D.scale(fac)
+
+        self.assertFalse(transform_2D.is_valid(H))
+
+    def test_scale_pair(self):
+        a = 0.5
+        b = 1.1
+        H = transform_2D.scale(a, b)
+
+        self.assertTrue(transform_2D.is_valid(H))
+
+        self.assertAlmostEqual(H[0, 0], a)
+        self.assertAlmostEqual(H[1, 1], b)
+        self.assertAlmostEqual(H[2, 2], 1)
+
     def test_scale_vector(self):
         fac = 0.5, 0.2
         H = transform_2D.scale(fac)
@@ -444,43 +461,27 @@ class Test_Build_Transforms(unittest.TestCase):
         self.assertAlmostEqual(H[2, 2], 1)
 
     def test_shear_A(self):
-        factor = 1.
-        angle = np.deg2rad(45)
+        A = 0.7
 
-        H = transform_2D.shear(factor, angle)
-
-        self.assertTrue(transform_2D.is_valid(H))
-
-        H0 = [[0.5, 0.5, 0.0],
-              [-0.5, 1.5, 0.0],
-              [0., 0., 1.]]
-
-        np.testing.assert_almost_equal(H, H0)
-
-    def test_shear_B(self):
-        factor = 1.
-        angle = np.deg2rad(0)
-
-        H = transform_2D.shear(factor, angle)
+        H = transform_2D.shear(A)
 
         self.assertTrue(transform_2D.is_valid(H))
 
-        H0 = [[1.0, 1.0, 0.0],
-              [0.0, 1.0, 0.0],
+        H0 = [[1.0, 0.0, 0.0],
+              [A, 1.0, 0.0],
               [0.0, 0.0, 1.0]]
 
         np.testing.assert_almost_equal(H, H0)
 
-    def test_shear_C(self):
-        factor = -0.5
-        angle = np.deg2rad(45)
+    def test_shear_B(self):
+        A = 0.0
 
-        H = transform_2D.shear(factor, angle)
+        H = transform_2D.shear(A)
 
         self.assertTrue(transform_2D.is_valid(H))
 
-        H0 = [[1.25, -.25, 0.0],
-              [0.25, 0.75, 0.0],
+        H0 = [[1.0, 0.0, 0.0],
+              [A, 1.0, 0.0],
               [0.0, 0.0, 1.0]]
 
         np.testing.assert_almost_equal(H, H0)
