@@ -45,7 +45,7 @@ def _bootstrap_js():
 #################################################
 
 
-class ImageWidget(IPython.html.widgets.widget.DOMWidget):
+class Image(IPython.html.widgets.widget.DOMWidget):
     """
     Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
     supplied, must be a Numpy array (or equivalent) with a shape similar to one of the following:
