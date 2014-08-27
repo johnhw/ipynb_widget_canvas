@@ -48,7 +48,8 @@ def png_xy(blob):
 
 def determine_mode(data):
     """
-    Determine image color mode.  Input data is expected to be 3D: [num_lines, num_samples, num_bands].
+    Determine image color mode.
+    Input data is expected to be 3D: [num_lines, num_samples, num_bands].
     """
 
     # Force data to be Numpy ndarray, if not already.
