@@ -7,7 +7,7 @@ import time
 
 import IPython.html.widgets
 import image
-import transform_2D
+# import transform
 
 #################################################
 # Helper functions
@@ -45,7 +45,7 @@ def _bootstrap_js():
 #################################################
 
 
-class Image(IPython.html.widgets.widget.DOMWidget):
+class ImageBase(IPython.html.widgets.widget.DOMWidget):
     """
     Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
     supplied, must be a Numpy array (or equivalent) with a shape similar to one of the following:
@@ -58,7 +58,7 @@ class Image(IPython.html.widgets.widget.DOMWidget):
     min(data) -> 0 and max(data) -> 255.
     """
 
-    _view_name = IPython.utils.traitlets.Unicode('CanvasImageView', sync=True)
+    _view_name = IPython.utils.traitlets.Unicode('CanvasImageBaseView', sync=True)
 
     # Image data source.
     data_encode = IPython.utils.traitlets.Unicode(sync=True)
@@ -66,20 +66,14 @@ class Image(IPython.html.widgets.widget.DOMWidget):
     # Image smoothing.
     smoothing = IPython.utils.traitlets.Bool(sync=True)
 
-    # Width and height of canvas as determined by the front-end after decoding a new image sent
+    # Width and height of canvas as determined by the front-end after receiving a new image
     # from the backend.
     width = IPython.utils.traitlets.CFloat(sync=True)
     height = IPython.utils.traitlets.CFloat(sync=True)
 
-    # Image transformation values.
-    _transform_values = IPython.utils.traitlets.List(sync=True)
-
-    # Mouse and keyboard event information.
-    _mouse = IPython.utils.traitlets.Dict(sync=True)
-
     def __init__(self, data_image=None, fmt='webp', **kwargs):
         """
-        Instantiate a new CanvasImageWidget object.
+        Instantiate a new CanvasImage object.
 
         Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
         supplied, must be a Numpy array (or equivalent) with a shape similar to one of the
@@ -92,36 +86,12 @@ class Image(IPython.html.widgets.widget.DOMWidget):
         If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
         min(data) -> 0 and max(data) -> 255.
         """
-        super(ImageWidget, self).__init__(**kwargs)
-
-        # Setup internal Python handler for front-end mouse events synced through
-        # the Traitlet self._mouse.
-        self.on_trait_change(self._handle_mouse, str('_mouse'))
-
-        # Setup dispatchers to manage user-defined Python event handlers.
-        self._mouse_move_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        self._mouse_drag_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        self._mouse_click_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        self._mouse_down_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        self._mouse_up_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        self._mouse_wheel_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-
-        # Mouse state helper variables.
-        self._flag_mouse_down = False
-        self._drag_origin_xy = None
-        self._drag_xy = None        # distance from drag_origin
-        self._drag_delta_xy = None  # distance from position of previous mouse drag motion event
-        self._drag_prior_mouse_xy = 0, 0
-
-        self.mouse_xy = 0, 0
+        super(ImageBase, self).__init__(**kwargs)
 
         # Store supplied init data in traitlet(s).
         self.fmt = fmt
         if data_image is not None:
             self.image = data_image
-
-        # Manage image 2D affine transform information.
-        # self._transform = transform.Transform()
 
     def __repr__(self):
         val = """Size: {:d} bytes\nFormat: {:s}
@@ -148,6 +118,77 @@ class Image(IPython.html.widgets.widget.DOMWidget):
         data_b64 = base64.b64encode(data_comp)
         self.data_encode = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
 
+    def display(self):
+        """
+        Display to Notebook using IPython hooks.
+        """
+        IPython.display.display(self)
+
+#################################################
+
+
+class Image(ImageBase):
+    """
+    Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
+    supplied, must be a Numpy array (or equivalent) with a shape similar to one of the following:
+        (rows, columns)    - Greyscale
+        (rows, columns, 1) - Greyscale
+        (rows, columns, 3) - RGB
+        (rows, columns, 4) - RGBA
+
+    If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
+    min(data) -> 0 and max(data) -> 255.
+    """
+
+    _view_name = IPython.utils.traitlets.Unicode('CanvasImageView', sync=True)
+
+    # Image transformation values.
+    _transform_values = IPython.utils.traitlets.List(sync=True)
+
+    # Mouse and keyboard event information.
+    _mouse = IPython.utils.traitlets.Dict(sync=True)
+
+    def __init__(self, data_image=None, **kwargs):
+        """
+        Instantiate a new CanvasImage object.
+
+        Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
+        supplied, must be a Numpy array (or equivalent) with a shape similar to one of the
+        following:
+            (rows, columns)    - Greyscale
+            (rows, columns, 1) - Greyscale
+            (rows, columns, 3) - RGB
+            (rows, columns, 4) - RGBA
+
+        If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
+        min(data) -> 0 and max(data) -> 255.
+        """
+        super(Image, self).__init__(data_image=data_image, **kwargs)
+
+        # Setup internal Python handler for front-end mouse events synced through
+        # the Traitlet self._mouse.
+        self.on_trait_change(self._handle_mouse, str('_mouse'))
+
+        # Setup dispatchers to manage user-defined Python event handlers.
+        self._mouse_move_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        self._mouse_drag_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        self._mouse_click_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        self._mouse_down_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        self._mouse_up_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        self._mouse_wheel_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+
+        # Mouse state helper variables.
+        self._flag_mouse_down = False
+        self._drag_origin_xy = None
+        self._drag_xy = None        # distance from drag_origin
+        self._drag_delta_xy = None  # distance from position of previous mouse drag motion event
+        self._drag_prior_mouse_xy = 0, 0
+
+        self.mouse_xy = 0, 0
+
+        # Manage image 2D affine transform information.
+        # self._transform = transform.Transform()
+
     @property
     def transform(self):
         print('get')
@@ -157,12 +198,6 @@ class Image(IPython.html.widgets.widget.DOMWidget):
     def transform(self, value):
         print('set')
         self._transform = value
-
-    def display(self):
-        """
-        Display to Notebook using IPython hooks.
-        """
-        IPython.display.display(self)
 
     #####################################################
     # Methods to handle Traitlet data sync events.
