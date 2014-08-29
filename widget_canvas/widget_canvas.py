@@ -39,6 +39,7 @@ def _bootstrap_js():
     files = ['widget_canvas.js']
 
     for f in files:
+        print('Boot: {}'.format(f))
         js = _read_local_js(f)
         IPython.display.display_javascript(js, raw=True)
 
@@ -73,7 +74,7 @@ class ImageBase(IPython.html.widgets.widget.DOMWidget):
 
     def __init__(self, data_image=None, fmt='webp', **kwargs):
         """
-        Instantiate a new CanvasImage object.
+        Instantiate a new Image object.
 
         Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
         supplied, must be a Numpy array (or equivalent) with a shape similar to one of the
@@ -94,8 +95,8 @@ class ImageBase(IPython.html.widgets.widget.DOMWidget):
             self.image = data_image
 
     def __repr__(self):
-        val = """Size: {:d} bytes\nFormat: {:s}
-        """.format(len(self.data_encode), self.fmt)
+        template = "Size: {:d} bytes\nFormat: {:s}\n"
+        value = template.format(len(self.data_encode), self.fmt)
 
         return val
 
@@ -150,7 +151,7 @@ class Image(ImageBase):
 
     def __init__(self, data_image=None, **kwargs):
         """
-        Instantiate a new CanvasImage object.
+        Instantiate a new Image object.
 
         Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
         supplied, must be a Numpy array (or equivalent) with a shape similar to one of the
@@ -260,7 +261,7 @@ class Image(ImageBase):
                 # Mouse changing from "down" to "up" generates a "click" event.
                 self._mouse_click_dispatcher(self, event)
 
-            # Clear/pdate state variables.
+            # Clear/update state variables.
             self._flag_mouse_down = False
             self._drag_origin_xy = None
             self._drag_delta_xy = None

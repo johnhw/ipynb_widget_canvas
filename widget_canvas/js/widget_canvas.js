@@ -1,18 +1,17 @@
 //============================================================================
 // CanvasWidget
 //============================================================================
-console.log('PRE AAA  widget_canvas.js');
+console.log('module widget_canvas.js');
 
-define([
-    "static/widgets/js/manager",
-    "static/widgets/js/widget",
-    // "jquery",
-], function (widgetmanager, widget) {
+require([
+    "widgets/js/widget",
+    "jquery",
+], function (WidgetManager, $) {
 
     console.log('define widget_canvas.js');
 
     // Define the widget's View.
-    var CanvasImageBaseView = widget.DOMWidgetView.extend({
+    var CanvasImageBaseView = IPython.DOMWidgetView.extend({
         initialize: function (options) {
             console.log('initialize');
 
@@ -25,7 +24,7 @@ define([
 
             // this.time_mouse = Date.now()
             // this.time_mouse_threshold = 20 // miliseconds
-            CanvasImageView.__super__.initialize.apply(this, arguments);
+            CanvasImageBaseView.__super__.initialize.apply(this, arguments);
         },
 
         render: function () {
@@ -139,7 +138,7 @@ define([
 
             // Clear any prior image data.
             this.clear();
-            this.set_smoothing(false);
+            // this.set_smoothing(false);
 
             // Draw image to screen.
             this.context.drawImage(this.image, 0, 0);
@@ -148,15 +147,10 @@ define([
             // this.touch();
         },
     });
+
     // Register View with widget manager.
     console.log('register');
-    widgetmanager.WidgetManager.register_widget_model('CanvasImageBaseView', CanvasImageBaseView);
-    // widget.WidgetManager.register_widget_view('CanvasImageBaseView', CanvasImageBaseView);
 
-    var results = {
-        'CanvasImageBaseView': CanvasImageBaseView,
-        // 'CanvasImageView': CanvasImageView,
-    }
-
-    return results
+    // Note: the method called below must be "register_widget_view", NOT "register_widget_model"!!
+    WidgetManager.register_widget_view('CanvasImageBaseView', CanvasImageBaseView);
 });
