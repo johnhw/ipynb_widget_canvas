@@ -46,7 +46,7 @@ def _bootstrap_js():
 #################################################
 
 
-class ImageBase(IPython.html.widgets.widget.DOMWidget):
+class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
     """
     Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
     supplied, must be a Numpy array (or equivalent) with a shape similar to one of the following:
@@ -87,7 +87,7 @@ class ImageBase(IPython.html.widgets.widget.DOMWidget):
         If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
         min(data) -> 0 and max(data) -> 255.
         """
-        super(ImageBase, self).__init__(**kwargs)
+        super(CanvasImageBase, self).__init__(**kwargs)
 
         # Store supplied init data in traitlet(s).
         self.fmt = fmt
@@ -98,7 +98,7 @@ class ImageBase(IPython.html.widgets.widget.DOMWidget):
         template = "Size: {:d} bytes\nFormat: {:s}\n"
         value = template.format(len(self.data_encode), self.fmt)
 
-        return val
+        return value
 
     @property
     def image(self):
@@ -128,7 +128,7 @@ class ImageBase(IPython.html.widgets.widget.DOMWidget):
 #################################################
 
 
-class Image(ImageBase):
+class CanvasImageFancy(CanvasImageBase):
     """
     Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
     supplied, must be a Numpy array (or equivalent) with a shape similar to one of the following:
@@ -141,7 +141,7 @@ class Image(ImageBase):
     min(data) -> 0 and max(data) -> 255.
     """
 
-    _view_name = IPython.utils.traitlets.Unicode('CanvasImageView', sync=True)
+    _view_name = IPython.utils.traitlets.Unicode('CanvasImageFancyView', sync=True)
 
     # Image transformation values.
     _transform_values = IPython.utils.traitlets.List(sync=True)
@@ -164,19 +164,26 @@ class Image(ImageBase):
         If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
         min(data) -> 0 and max(data) -> 255.
         """
-        super(Image, self).__init__(data_image=data_image, **kwargs)
+        super(CanvasImageFancy, self).__init__(data_image=data_image, **kwargs)
 
         # Setup internal Python handler for front-end mouse events synced through
         # the Traitlet self._mouse.
         self.on_trait_change(self._handle_mouse, str('_mouse'))
 
         # Setup dispatchers to manage user-defined Python event handlers.
-        self._mouse_move_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        self._mouse_drag_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        self._mouse_click_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        self._mouse_down_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        self._mouse_up_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        self._mouse_wheel_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        # mouse_move_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        # mouse_drag_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        # mouse_click_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        # mouse_down_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        # mouse_up_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+        # mouse_wheel_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
+
+        self._mouse_event_dispatchers = {'move': IPython.html.widgets.widget.CallbackDispatcher(),
+                                         'drag': IPython.html.widgets.widget.CallbackDispatcher(),
+                                         'down': IPython.html.widgets.widget.CallbackDispatcher(),
+                                         'up': IPython.html.widgets.widget.CallbackDispatcher(),
+                                         'click': IPython.html.widgets.widget.CallbackDispatcher(),
+                                         'wheel': IPython.html.widgets.widget.CallbackDispatcher()}
 
         # Mouse state helper variables.
         self._flag_mouse_down = False
@@ -215,9 +222,9 @@ class Image(ImageBase):
 
         # Call all registered back-end event handlers with updated information.
         if event['type'] == 'mousemove':
-            # The mouse has moved.
+            # The mouse has moved, but what kind of move, eh?
             if self._flag_mouse_down:
-                # Mouse has moved with button down.  This is really a `mousedrag` event.
+                # Mouse Drag Event: the mouse moved with the button down.
                 if not self._drag_origin_xy:
                     raise ValueError('drag origin should have been defined prior to \
                                       calling this function')
@@ -230,38 +237,44 @@ class Image(ImageBase):
                 self._drag_delta_xy = (self._drag_xy[0] - self._drag_prior_mouse_xy[0],
                                        self._drag_xy[1] - self._drag_prior_mouse_xy[1])
 
-                # Assemble event details.
+                # Assemble drag event details.
                 event['type'] = str('mousedrag')
                 event['drag_origin_xy'] = self._drag_origin_xy
                 event['drag_xy'] = self._drag_xy
                 event['drag_delta_xy'] = self._drag_delta_xy
 
+                # Call dispatcher.
                 self._mouse_drag_dispatcher(self, event)
             else:
-                # Mouse has moved with button up.
+                # Mouse Move Event, ie. the button is up.
+                # Call dispatcher.
                 self._mouse_move_dispatcher(self, event)
 
         elif event['type'] == 'mousedown':
-            # Mouse button has been clicked down.
+            # Mouse Down Event.
 
-            # Update drag origin in case the mouse moves afterwards thereby generating a drag
-            # event.
+            # Update drag event variable.
+            # Just in case the mouse moves afterwards and generates a proper drag event.
             self._drag_prior_mouse_xy = self.mouse_xy
             self._drag_origin_xy = self.mouse_xy
             self._drag_xy = 0, 0
 
+            # Update state variable and call dispatcher.
             self._flag_mouse_down = True
             self._mouse_down_dispatcher(self, event)
 
         elif event['type'] == 'mouseup':
-            # Mouse button has been lifted.
+            # Mouse Up Event.
+
+            # Call dispatcher.
             self._mouse_up_dispatcher(self, event)
 
             if self._flag_mouse_down:
-                # Mouse changing from "down" to "up" generates a "click" event.
+                # Mouse Click Event, mouse down + mouse up = mose click.
+                # Call dispatcher.
                 self._mouse_click_dispatcher(self, event)
 
-            # Clear/update state variables.
+            # Update mouse state variables.
             self._flag_mouse_down = False
             self._drag_origin_xy = None
             self._drag_delta_xy = None
@@ -269,48 +282,62 @@ class Image(ImageBase):
             self._drag_prior_mouse_xy = None
 
         elif event['type'] == 'wheel':
-            # Wheel scroll event.
+            # Mouse Wheel Event.
+            # Call dispatcher.
             self._mouse_wheel_dispatcher(self, event)
 
         else:
             pass
 
     #######################################################
-    # User-facing methods to register Python event handler functions.
+    # Allow user to register Python event handler functions.
     #
-    # The signature for each registration function follows a common theme:
+    # The signature for registration function is:
+    #   event_type: a string identifying event type.
     #   callback : function to be called with two arguments: widget instance and event information.
     #   remove : bool (optional), set to true to unregister the callback function.
     #
-    def on_mouse_move(self, callback, remove=False):
-        """Repond to mouse motion.
+    def show_mouse_event_types(self):
+        """Helper function to return list of valid mouse event types.
         """
-        self._mouse_move_dispatcher.register_callback(callback, remove=remove)
+        return self._mouse_event_dispatchers.keys()
 
-    def on_mouse_drag(self, callback, remove=False):
-        """Repond to drag motion: motion while button is down.
+    def on_mouse(self, event_type, callback, remove=False):
+        """Register mouse event callback function with appropriate dispatcher.
         """
-        self._mouse_drag_dispatcher.register_callback(callback, remove=remove)
+        try:
+            dispatcher = self._mouse_event_dispatchers[event_type]
+        except KeyError:
+            raise ValueError('Invalid event type: {}'.format(event_type))
+        except:
+            raise
 
-    def on_mouse_down(self, callback, remove=False):
-        """Repond to mouse button down.
-        """
-        self._mouse_down_dispatcher.register_callback(callback, remove=remove)
+        dispatcher.register_callback(callback, remove=remove)
 
-    def on_mouse_up(self, callback, remove=False):
-        """Repond to mouse button up.
-        """
-        self._mouse_up_dispatcher.register_callback(callback, remove=remove)
-
-    def on_mouse_click(self, callback, remove=False):
-        """Repond to mouse button click: button down followed by button up.
-        """
-        self._mouse_click_dispatcher.register_callback(callback, remove=remove)
-
-    def on_mouse_wheel(self, callback, remove=False):
-        """Repond to mouse wheel scroll event.
-        """
-        self._mouse_wheel_dispatcher.register_callback(callback, remove=remove)
+    # def on_mouse_move(self, callback, remove=False):
+    #     """Repond to mouse motion.
+    #     """
+    #     self._mouse_move_dispatcher.register_callback(callback, remove=remove)
+    # def on_mouse_drag(self, callback, remove=False):
+    #     """Repond to drag motion: motion while button is down.
+    #     """
+    #     self._mouse_drag_dispatcher.register_callback(callback, remove=remove)
+    # def on_mouse_down(self, callback, remove=False):
+    #     """Repond to mouse button down.
+    #     """
+    #     self._mouse_down_dispatcher.register_callback(callback, remove=remove)
+    # def on_mouse_up(self, callback, remove=False):
+    #     """Repond to mouse button up.
+    #     """
+    #     self._mouse_up_dispatcher.register_callback(callback, remove=remove)
+    # def on_mouse_click(self, callback, remove=False):
+    #     """Repond to mouse button click: button down followed by button up.
+    #     """
+    #     self._mouse_click_dispatcher.register_callback(callback, remove=remove)
+    # def on_mouse_wheel(self, callback, remove=False):
+    #     """Repond to mouse wheel scroll event.
+    #     """
+    #     self._mouse_wheel_dispatcher.register_callback(callback, remove=remove)
 
 #################################################
 
