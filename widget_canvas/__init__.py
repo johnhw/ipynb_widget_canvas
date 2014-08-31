@@ -1,3 +1,4 @@
 
 import image
-from widget_canvas import ImageBase
+from widget_canvas import CanvasImageBase
+from widget_canvas import CanvasImageFancy

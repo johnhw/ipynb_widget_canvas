@@ -302,17 +302,25 @@ class CanvasImageFancy(CanvasImageBase):
         """
         return self._mouse_event_dispatchers.keys()
 
-    def on_mouse(self, event_type, callback, remove=False):
+    def on_mouse(self, callback, event_type=None, remove=False):
         """Register mouse event callback function with appropriate dispatcher.
+        If event_type is not specified, register with all.
         """
-        try:
-            dispatcher = self._mouse_event_dispatchers[event_type]
-        except KeyError:
-            raise ValueError('Invalid event type: {}'.format(event_type))
-        except:
-            raise
+        if event_type:
+            try:
+                d = self._mouse_event_dispatchers[event_type]
+            except KeyError:
+                raise ValueError('Invalid event type: {}'.format(event_type))
+            except:
+                raise
 
-        dispatcher.register_callback(callback, remove=remove)
+            # Call dispatcher for user-specified event type.
+            d.register_callback(callback, remove=remove)
+        else:
+            # Call dispatcher for all specified event types.
+            for d in self._mouse_event_dispatchers.values():
+                d.register_callback(callback, remove=remove)
+
 
     # def on_mouse_move(self, callback, remove=False):
     #     """Repond to mouse motion.
