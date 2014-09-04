@@ -39,7 +39,7 @@ def _bootstrap_js():
     files = ['widget_canvas.js']
 
     for f in files:
-        print('Boot: {}'.format(f))
+        print('bootstrap: {}'.format(f))
         js = _read_local_js(f)
         IPython.display.display_javascript(js, raw=True)
 
@@ -67,12 +67,12 @@ class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
     # Image smoothing.
     smoothing = IPython.utils.traitlets.Bool(sync=True)
 
-    # Width and height of canvas as determined by the front-end after receiving a new image
-    # from the backend.
-    width = IPython.utils.traitlets.CFloat(sync=True)
-    height = IPython.utils.traitlets.CFloat(sync=True)
+    # Image data and image display geometry.
+    _geometry = IPython.utils.traitlets.Dict(sync=True)
+    # width = IPython.utils.traitlets.CFloat(sync=True)
+    # height = IPython.utils.traitlets.CFloat(sync=True)
 
-    def __init__(self, data_image=None, fmt='webp', **kwargs):
+    def __init__(self, data_image=None, fmt='webp', quality=75, **kwargs):
         """
         Instantiate a new Image object.
 
@@ -86,13 +86,24 @@ class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
 
         If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
         min(data) -> 0 and max(data) -> 255.
+
+        note: Q = 75 yields great results using WebP image codec.
         """
         super(CanvasImageBase, self).__init__(**kwargs)
 
         # Store supplied init data in traitlet(s).
         self.fmt = fmt
+        self.quality = quality
         if data_image is not None:
             self.image = data_image
+
+        # http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
+        self._data_width = None
+        self._data_height = None
+        self._canvas_width = None
+        self._canvas_height = None
+        self._display_width = None
+        self._display_height = None
 
     def __repr__(self):
         template = "Size: {:d} bytes\nFormat: {:s}\n"
@@ -112,12 +123,36 @@ class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
         if data_image is None:
             return
 
+        self._data_width = data_image.shape[1]
+        self._data_height = data_image.shape[0]
+
         # Compress input image data and encode via Base64.
-        quality = 75  # note: Q = 75 yields great results using WebP image codec.
-        data_comp, fmt = image.compress(data_image, fmt=self.fmt, quality=quality)
+        data_comp, fmt = image.compress(data_image, fmt=self.fmt, quality=self.quality)
 
         data_b64 = base64.b64encode(data_comp)
         self.data_encode = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
+
+
+    @property
+    def geometry(self):
+        return self._geometry
+
+    # @geometry.setter
+    # def geometry(self, info):
+    #     try:
+    #         info_tmp = {k: info[k] for k in self._geometry_keys}
+    #     except KeyError:
+    #         raise ValueError('Invalid geomotry key(s): {}'.format(','.join(info.keys())))
+    #
+    #     self._geometry = info_tmp
+
+    @property
+    def display_width(self):
+        return self._geometry
+
+    @display_width.setter
+    def display_width(self, value):
+        sel
 
     def display(self):
         """

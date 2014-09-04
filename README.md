@@ -145,17 +145,19 @@ and solving my implementation problems.
   My solution was to explicitly set the Canvas style width and height whenever I needed to modify
   the Canvas' inherent width and height.
 
+- This has a nice description of the order of events when drawing an image: http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
+
 - JavaScript mouse events are interesting:
 
-  Event       | Description
-  ---         | ---
-  mousedown   | mouse button is pressed on an element.
-  mouseup     | mouse button is released over an element.
-  mousemove   | mouse is moved over an element.
-  mouseenter  | mouse is moved onto the element that has the listener attached.
-  mouseleave  | mouse is moved off the element that has the listener attached.
-  mouseover   | mouse is moved onto the element that has the listener attached or onto one of its children.
-  mouseout    | mouse is moved off the element that has the listener attached or off one of its children.
+ | Event       | Description |
+ | ---         | --- |
+ | mousedown   | mouse button is pressed on an element. |
+ | mouseup     | mouse button is released over an element. |
+ | mousemove   | mouse is moved over an element. |
+ | mouseenter  | mouse is moved onto the element that has the listener attached. |
+ | mouseleave  | mouse is moved off the element that has the listener attached. |
+ | mouseover   | mouse is moved onto the element that has the listener attached or onto one of its children. |
+ | mouseout    | mouse is moved off the element that has the listener attached or off one of its children. |
 
 - Understanding `Canvas Element` mouse
   [coordinates](http://www.html5canvastutorials.com/advanced/html5-canvas-mouse-coordinates/)

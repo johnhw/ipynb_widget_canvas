@@ -17,8 +17,8 @@ require([
 
             // Backbone Model --> My JavaScript View
             this.model.on('change:data_encode', this.update_data_encode, this);
-            // this.model.on('change:width', this.update_width, this);
-            // this.model.on('change:height', this.update_height, this);
+            this.model.on('change:width', this.update_width, this);
+            this.model.on('change:height', this.update_height, this);
             // this.model.on('change:_transform_values', this.update_transform, this);
             // this.model.on('change:smoothing', this.update_smoothing, this);
 
@@ -72,7 +72,8 @@ require([
 
             this.image.src = this.model.get('data_encode');
 
-            // Event processing continues inside this.image's defined onload() event handler.
+            // Event processing continues inside this.image's onload() event handler defined
+            // earlier inside this.render().
         },
 
         update_data_image: function () {
@@ -103,7 +104,7 @@ require([
             // console.log('set_width: ', value);
 
             this.canvas.width = value
-            this.canvas.style.width = value + 'px'
+            this.canvas.style.width = value*1.5 + 'px'
 
             this.model.set('width', value);
             this.touch();
@@ -134,6 +135,7 @@ require([
 
         draw: function () {
             // Draw image data from internal <img> to the <canvas>.
+            // http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
             // console.log('draw');
 
             // Clear any prior image data.
