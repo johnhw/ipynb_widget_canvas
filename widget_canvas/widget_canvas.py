@@ -5,6 +5,7 @@ import os
 import base64
 import time
 
+import numpy as np
 import IPython.html.widgets
 import image
 # import transform
@@ -76,8 +77,8 @@ class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
         """
         Instantiate a new Image object.
 
-        Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
-        supplied, must be a Numpy array (or equivalent) with a shape similar to one of the
+        Display images using HTML5 Canvas with IPython Notebook widget system. Input image data,
+        if supplied, must be a Numpy array (or equivalent) with a shape similar to one of the
         following:
             (rows, columns)    - Greyscale
             (rows, columns, 1) - Greyscale
@@ -91,23 +92,29 @@ class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
         """
         super(CanvasImageBase, self).__init__(**kwargs)
 
+        # http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
+        self._data_shape = None
+        self._canvas_shape = None
+        self._display_shape = None
+
         # Store supplied init data in traitlet(s).
         self.fmt = fmt
         self.quality = quality
         if data_image is not None:
             self.image = data_image
 
-        # http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
-        self._data_width = None
-        self._data_height = None
-        self._canvas_width = None
-        self._canvas_height = None
-        self._display_width = None
-        self._display_height = None
-
     def __repr__(self):
-        template = "Size: {:d} bytes\nFormat: {:s}\n"
-        value = template.format(len(self.data_encode), self.fmt)
+        template = \
+"""
+Data:   {:d} x {:d} pixels
+Canvas: {:d} x {:d} pixels
+Format: {:s}
+Size:   {:d} bytes
+"""
+        value = template.format(self._data_shape[0], self._data_shape[1],
+                                self._canvas_shape[0], self._canvas_shape[1],
+                                self.fmt,
+                                len(self.data_encode))
 
         return value
 
@@ -121,38 +128,62 @@ class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
         self._image = data_image
 
         if data_image is None:
+            # Maybe call a reset function here??
             return
 
-        self._data_width = data_image.shape[1]
-        self._data_height = data_image.shape[0]
+        self._data_shape = self._image.shape[:2]
 
         # Compress input image data and encode via Base64.
-        data_comp, fmt = image.compress(data_image, fmt=self.fmt, quality=self.quality)
+        data_comp, fmt = image.compress(self._image, fmt=self.fmt, quality=self.quality)
 
         data_b64 = base64.b64encode(data_comp)
         self.data_encode = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
 
+    def _update_geometry(self, **kwargs):
+        """
+        Update geometry and Trait to sync with front end.
+        """
+        valid_keys = ['canvas_shape', 'display_shape']
+        for key in valid_keys:
+            if key in kwargs:
+                val = kwargs[key]
+                if len(val) == 2:
+                    # set attributes like self._data_shape
+                    setattr(self, '_'+key, val)
+                else:
+                    raise ValueError('geometry property must be size 2: {}'.format(val))
+
+        # Sync canvas & display geometry to front end.
+        self._geometry = {'canvas_shape': self._canvas_shape,
+                          'display_shape': self._display_shape}
 
     @property
-    def geometry(self):
-        return self._geometry
-
-    # @geometry.setter
-    # def geometry(self, info):
-    #     try:
-    #         info_tmp = {k: info[k] for k in self._geometry_keys}
-    #     except KeyError:
-    #         raise ValueError('Invalid geomotry key(s): {}'.format(','.join(info.keys())))
-    #
-    #     self._geometry = info_tmp
+    def data_shape(self):
+        """
+        data width and height, static, defined by the image data.
+        """
+        return self._data_shape
 
     @property
-    def display_width(self):
-        return self._geometry
+    def canvas_shape(self):
+        """canvas width and height"""
+        return self._canvas_shape
 
-    @display_width.setter
-    def display_width(self, value):
-        sel
+    @canvas_shape.setter
+    def canvas_shape(self, shape):
+        self._update_geometry(canvas_shape=shape)
+
+    @property
+    def display_shape(self):
+        """
+        CSS display width and height
+        Probably easier to ignore display_data and focus on canvas_data instead.
+        """
+        return self._display_width, self._display_height
+
+    @display_shape.setter
+    def display_shape(self, shape):
+        self._update_geometry(display_shape=shape)
 
     def display(self):
         """

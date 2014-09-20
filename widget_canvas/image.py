@@ -16,6 +16,7 @@ arrays.  Output file format is determined solely from user-supplied filename's e
 fancy data processing of any kind!!
 """
 
+# data_comp, fmt = image.compress(data_image, fmt=self.fmt, quality=self.quality)
 
 def read(fname):
     """Read image file, return a Numpy array."""

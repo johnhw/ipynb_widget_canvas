@@ -19,6 +19,7 @@ require([
             this.model.on('change:data_encode', this.update_data_encode, this);
             this.model.on('change:width', this.update_width, this);
             this.model.on('change:height', this.update_height, this);
+            this.model.on('change:_geometry', this.update_geometry, this);
             // this.model.on('change:_transform_values', this.update_transform, this);
             // this.model.on('change:smoothing', this.update_smoothing, this);
 
@@ -73,7 +74,7 @@ require([
             this.image.src = this.model.get('data_encode');
 
             // Event processing continues inside this.image's onload() event handler defined
-            // earlier inside this.render().
+            // above in method this.render().
         },
 
         update_data_image: function () {
@@ -84,6 +85,24 @@ require([
             this.set_height(this.image.height);
 
             this.draw();
+        },
+
+        update_geometry: function () {
+            // Python --> JavaScript
+            console.log('update_geometry');
+            this.set_canvas_shape(this.model.get('_geometry'));
+            this.set_display_shape(this.model.get('_geometry'));
+            this.draw();
+        },
+
+        set_canvas_shape: function (geometry) {
+            // console.log('set_canvas_shape: ', value);
+            this.canvas.width = geometry.canvas_shape[0]
+            this.canvas.height = geometry.canvas_shape[1]
+            this.canvas.style.width = value + 'px'
+
+            this.model.set('width', value);
+            this.touch();
         },
 
         update_width: function () {
@@ -104,7 +123,7 @@ require([
             // console.log('set_width: ', value);
 
             this.canvas.width = value
-            this.canvas.style.width = value*1.5 + 'px'
+            this.canvas.style.width = value + 'px'
 
             this.model.set('width', value);
             this.touch();
