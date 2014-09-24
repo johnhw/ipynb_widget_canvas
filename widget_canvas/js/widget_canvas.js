@@ -17,9 +17,9 @@ require([
 
             // Backbone Model --> My JavaScript View
             this.model.on('change:data_encode', this.update_data_encode, this);
-            this.model.on('change:width', this.update_width, this);
-            this.model.on('change:height', this.update_height, this);
-            this.model.on('change:_geometry', this.update_geometry, this);
+            this.model.on('change:_canvas_shape', this.update_canvas_shape, this);
+            // this.model.on('change:width', this.update_width, this);
+            // this.model.on('change:height', this.update_height, this);
             // this.model.on('change:_transform_values', this.update_transform, this);
             // this.model.on('change:smoothing', this.update_smoothing, this);
 
@@ -30,7 +30,7 @@ require([
 
         render: function () {
             // Render a widget's view instance to the DOM.
-            // console.log('render');
+            console.log('render');
 
             // This project's view is quite simple: just a single <canvas> element.
             // http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
@@ -47,10 +47,11 @@ require([
             // Event handling for drawing new data to the canvas.
             var that = this
             var draw_onload = function () {
-                // console.log('draw_onload');
-                that.update_data_image();
+                console.log('draw_onload');
+                that.draw();
             }
 
+            // Event handling for drawing new data to the canvas.
             this.image.onload = draw_onload
 
             // Does any valid data exist in the system?  Copy data_b64 if it exists in model.
@@ -62,8 +63,8 @@ require([
                 }
             }
 
-            // I noticed problems if this update() function call was left out, e.g. second views of
-            // my model would not initially receive CSS style properties.
+            // I noticed problems if this update() function call was left out, e.g. second
+            // views of my model would not initially receive CSS style properties.
             this.update();
         },
 
@@ -77,89 +78,33 @@ require([
             // above in method this.render().
         },
 
-        update_data_image: function () {
-            // Helper handler.
-            // console.log('update_data_image');
-
-            this.set_width(this.image.width);
-            this.set_height(this.image.height);
-
-            this.draw();
-        },
-
-        update_geometry: function () {
+        update_canvas_shape: function () {
             // Python --> JavaScript
-            console.log('update_geometry');
-            this.set_canvas_shape(this.model.get('_geometry'));
-            this.set_display_shape(this.model.get('_geometry'));
+            console.log('update_canvas_shape');
+
+            var shape = this.model.get('_canvas_shape');
+            this.set_canvas_shape(shape);
+            this.set_css_shape(shape);
+
             this.draw();
         },
 
-        set_canvas_shape: function (geometry) {
-            // console.log('set_canvas_shape: ', value);
-            this.canvas.width = geometry.canvas_shape[0]
-            this.canvas.height = geometry.canvas_shape[1]
-            this.canvas.style.width = value + 'px'
-
-            this.model.set('width', value);
-            this.touch();
+        set_canvas_shape: function (shape) {
+            console.log('set_canvas_shape: ', shape);
+            this.canvas.width = shape[0]
+            this.canvas.height = shape[1]
         },
 
-        update_width: function () {
-            // Python --> JavaScript
-            // console.log('update_width');
-            this.set_width(this.model.get('width'));
-            this.draw();
-        },
-
-        update_height: function () {
-            // Python --> JavaScript
-            // console.log('update_height');
-            this.set_height(this.model.get('height'));
-            this.draw();
-        },
-
-        set_width: function (value) {
-            // console.log('set_width: ', value);
-
-            this.canvas.width = value
-            this.canvas.style.width = value + 'px'
-
-            this.model.set('width', value);
-            this.touch();
-        },
-
-        set_height: function (value) {
-            // console.log('set_height: ', value);
-
-            this.canvas.height = value
-            this.canvas.style.height = value + 'px'
-
-            this.model.set('height', value);
-            this.touch()
-        },
-
-        clear: function () {
-            // Clear the canvas while preserving current state.
-            // http://stackoverflow.com/a/6722031/282840
-            // console.log('clear: ', 0, 0, this.canvas.width, this.canvas.height);
-
-            this.context.save();
-
-            this.context.setTransform(1, 0, 0, 1, 0, 0);
-            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-            this.context.restore();
+        set_css_shape: function (shape) {
+            console.log('set_css_shape: ', shape);
+            this.canvas.style.width = shape[0] + 'px'
+            this.canvas.style.height = shape[1] + 'px'
         },
 
         draw: function () {
             // Draw image data from internal <img> to the <canvas>.
             // http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
-            // console.log('draw');
-
-            // Clear any prior image data.
-            this.clear();
-            // this.set_smoothing(false);
+            console.log('draw');
 
             // Draw image to screen.
             this.context.drawImage(this.image, 0, 0);
@@ -167,6 +112,55 @@ require([
             // Must call this.touch() after any modifications to Backbone Model data.
             // this.touch();
         },
+
+        // update_width: function () {
+        //     // Python --> JavaScript
+        //     // console.log('update_width');
+        //     this.set_width(this.model.get('width'));
+        //     this.draw();
+        // },
+        // update_height: function () {
+        //     // Python --> JavaScript
+        //     // console.log('update_height');
+        //     this.set_height(this.model.get('height'));
+        //     this.draw();
+        // },
+        // set_width: function (value) {
+        //     // console.log('set_width: ', value);
+        //     this.canvas.width = value
+        //     this.canvas.style.width = value + 'px'
+        //     this.model.set('width', value);
+        //     this.touch();
+        // },
+        // set_height: function (value) {
+        //     // console.log('set_height: ', value);
+        //     this.canvas.height = value
+        //     this.canvas.style.height = value + 'px'
+        //     this.model.set('height', value);
+        //     this.touch()
+        // },
+        // clear: function () {
+        //     // Clear the canvas while preserving current state.
+        //     // http://stackoverflow.com/a/6722031/282840
+        //     // console.log('clear: ', 0, 0, this.canvas.width, this.canvas.height);
+        //     this.context.save();
+        //     this.context.setTransform(1, 0, 0, 1, 0, 0);
+        //     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        //     this.context.restore();
+        // },
+        // draw_old: function () {
+        //     // Draw image data from internal <img> to the <canvas>.
+        //     // http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
+        //     // console.log('draw');
+        //     // Clear any prior image data.
+        //     this.clear();
+        //     // this.set_smoothing(false);
+        //     // Draw image to screen.
+        //     this.context.drawImage(this.image, 0, 0);
+        //     // Must call this.touch() after any modifications to Backbone Model data.
+        //     // this.touch();
+        // },
+
     });
 
     // Define the widget View.
@@ -186,28 +180,21 @@ require([
         // render: function () {
         //     // Render a widget's view instance to the DOM.
         //     // console.log('render');
-
         //     // This project's view is quite simple: just a single <canvas> element.
-        //     // http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
         //     this.setElement('<canvas />');
-
         //     // Gather some handy references for the canvas and its context.
         //     this.canvas = this.el
         //     this.context = this.canvas.getContext('2d');
-
         //     // Internal image element serving to render new image src data.  This object will
         //     // later be used as source data argument to the canvas' own `drawImage()` method.
         //     this.image = new Image();
-
         //     // Event handling for drawing new data to the canvas.
         //     var that = this
         //     var draw_onload = function () {
         //         // console.log('draw_onload');
         //         that.update_data_image();
         //     }
-
         //     this.image.onload = draw_onload
-
         //     // Does any valid data exist in the system?  Copy data_b64 if it exists in model.
         //     if (this.model.has('data_encode')) {
         //         // console.log('render has b64');
@@ -216,9 +203,8 @@ require([
         //             this.update_data_encode();
         //         }
         //     }
-
-        //     // I noticed problems if this update() function call was left out, e.g. second views of
-        //     // my model would not initially receive CSS style properties.
+        //     // I noticed problems if this update() function call was left out, e.g. second
+        //     // views of my model would not initially receive CSS style properties.
         //     this.update();
         // },
 

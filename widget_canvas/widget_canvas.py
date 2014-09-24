@@ -69,7 +69,7 @@ class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
     smoothing = IPython.utils.traitlets.Bool(sync=True)
 
     # Image data and image display geometry.
-    _geometry = IPython.utils.traitlets.Dict(sync=True)
+    _canvas_shape = IPython.utils.traitlets.Tuple(sync=True)
     # width = IPython.utils.traitlets.CFloat(sync=True)
     # height = IPython.utils.traitlets.CFloat(sync=True)
 
@@ -93,9 +93,7 @@ class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
         super(CanvasImageBase, self).__init__(**kwargs)
 
         # http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
-        self._data_shape = None
-        self._canvas_shape = None
-        self._display_shape = None
+        self._data_shape = None, None
 
         # Store supplied init data in traitlet(s).
         self.fmt = fmt
@@ -111,8 +109,8 @@ Canvas: {:d} x {:d} pixels
 Format: {:s}
 Size:   {:d} bytes
 """
-        value = template.format(self._data_shape[0], self._data_shape[1],
-                                self._canvas_shape[0], self._canvas_shape[1],
+        value = template.format(self.data_shape[0], self.data_shape[1],
+                                self.canvas_shape[0], self.canvas_shape[1],
                                 self.fmt,
                                 len(self.data_encode))
 
@@ -135,55 +133,46 @@ Size:   {:d} bytes
 
         # Compress input image data and encode via Base64.
         data_comp, fmt = image.compress(self._image, fmt=self.fmt, quality=self.quality)
-
         data_b64 = base64.b64encode(data_comp)
+
         self.data_encode = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
 
-    def _update_geometry(self, **kwargs):
-        """
-        Update geometry and Trait to sync with front end.
-        """
-        valid_keys = ['canvas_shape', 'display_shape']
-        for key in valid_keys:
-            if key in kwargs:
-                val = kwargs[key]
-                if len(val) == 2:
-                    # set attributes like self._data_shape
-                    setattr(self, '_'+key, val)
-                else:
-                    raise ValueError('geometry property must be size 2: {}'.format(val))
-
-        # Sync canvas & display geometry to front end.
-        self._geometry = {'canvas_shape': self._canvas_shape,
-                          'display_shape': self._display_shape}
+    # def _update_geometry(self, **kwargs):
+    #     """
+    #     Update geometry details and sync corresponding Trait with front end.
+    #     """
+    #     valid_keys = ['canvas_shape', 'display_shape']
+    #     for key in valid_keys:
+    #         if key in kwargs:
+    #             val = kwargs[key]
+    #             if len(val) == 2:
+    #                 # set attributes like self._data_shape
+    #                 setattr(self, '_'+key, val)
+    #             else:
+    #                 raise ValueError('geometry property must be size 2: {}'.format(val))
+    #     # Sync canvas & display geometry to front end.
+    #     self._geometry = self._canvas_shape
 
     @property
     def data_shape(self):
         """
-        data width and height, static, defined by the image data.
+        Data width and height.  Defined by the image data.
         """
         return self._data_shape
 
     @property
     def canvas_shape(self):
-        """canvas width and height"""
+        """
+        Canvas width and height.
+        """
         return self._canvas_shape
 
     @canvas_shape.setter
     def canvas_shape(self, shape):
-        self._update_geometry(canvas_shape=shape)
-
-    @property
-    def display_shape(self):
-        """
-        CSS display width and height
-        Probably easier to ignore display_data and focus on canvas_data instead.
-        """
-        return self._display_width, self._display_height
-
-    @display_shape.setter
-    def display_shape(self, shape):
-        self._update_geometry(display_shape=shape)
+        if len(shape) == 2:
+            self._canvas_shape = shape
+        else:
+            raise ValueError('Shape must be two-element sequence: {}'.format(shape))
 
     def display(self):
         """
