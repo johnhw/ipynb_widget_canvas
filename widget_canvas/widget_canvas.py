@@ -156,7 +156,7 @@ Size:   {:d} bytes
     @property
     def data_shape(self):
         """
-        Data width and height.  Defined by the image data.
+        Data width and height.  Defined by the user-supplied image data.
         """
         return self._data_shape
 
