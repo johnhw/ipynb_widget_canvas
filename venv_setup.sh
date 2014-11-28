@@ -14,6 +14,8 @@ pip install wheel
 pip wheel -r req-common.txt
 pip install -U -r req-common.txt
 
+pip install -U data_io
+
 # Freeze package version numbers
 pip freeze > req-stable.txt
 

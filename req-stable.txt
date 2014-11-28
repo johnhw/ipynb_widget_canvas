@@ -1,5 +1,6 @@
 -f /home/pierre/.pip/wheel_dir
 Cython==0.21.1
+Data-IO==2014.09.12
 Jinja2==2.7.3
 MarkupSafe==0.23
 Pillow==2.6.1
