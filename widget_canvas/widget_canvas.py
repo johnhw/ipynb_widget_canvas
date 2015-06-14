@@ -1,9 +1,6 @@
 
 from __future__ import division, print_function, unicode_literals, absolute_import
 
-import base64
-
-import IPython
 from IPython.html import widgets
 from IPython.utils import traitlets
 
@@ -120,7 +117,7 @@ class CanvasImage(widgets.widget.DOMWidget):
                 self._canvas_height, self._canvas_width = HxW
                 self.height, self.width = HxW
 
-                self._encoded = base64.b64encode(data_comp)
+                self._encoded = image.encode(data_comp)
 
     @property
     def format(self):

@@ -3,14 +3,13 @@ from __future__ import division, print_function, unicode_literals, absolute_impo
 
 import base64
 import urllib
-import io
 
 import numpy as np
 import imageio
 import requests
 
 """
-This module contains helper functions for working with image data.
+This module contains a variety of helper functions for working with image data.
 """
 
 
@@ -22,12 +21,14 @@ def normalize_url(url):
     urllib.parse.html#urllib.parse.ParseResult.geturl
     """
     parts = urllib.parse.urlsplit(url)
-    return parts.geturl()
+    url_nice = parts.geturl()
+
+    return url_nice
 
 
 def download(url, verbose=False):
     """
-    Download compressed image data from url.
+    Download compressed image data from URL.
 
     http://stackoverflow.com/questions/13137817/
     how-to-download-image-using-requests/13137873#13137873
@@ -40,7 +41,7 @@ def download(url, verbose=False):
     # Binary compressed image data from response content.
     data_comp = resp.content
 
-    # e.g. 'image/jpeg' --> 'jpeg'
+    # Compression format, e.g. 'image/jpeg' --> 'jpeg'
     format = resp.headers['content-type'].split('/')[1]
 
     return data_comp, format
@@ -145,14 +146,14 @@ def compress(data, mode=None, fmt='webp', **kwargs):
 
 def decompress(data_comp):
     """
-    Decompress image from supplied bytes data.
+    Decompress image from supplied byte data.
     """
     return imageio.imread(data_comp)
 
 
-def encode(data_comp, fmt):
+def encode(data_comp):
     """
-    Encode already-compressed image data as base64.
+    Apply base64 text encoding to already-compressed image byte data.
     """
     data_encode = base64.b64encode(data_comp)
 

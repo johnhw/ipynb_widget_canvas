@@ -1,0 +1,6 @@
+
+# project
+imageio
+requests
+numpy
+ipython==3.1.0
