@@ -1,58 +1,59 @@
 
-from __future__ import division, print_function, unicode_literals
+from __future__ import division, print_function, unicode_literals, absolute_import
 
-import StringIO
-import struct
+import base64
+import urllib
+import io
 
-import PIL
-import PIL.Image
 import numpy as np
+import imageio
+import requests
 
 """
 This module contains helper functions for working with image data.
-
-Reading and writing image data using PIL or Pillow.  Image data is processed to/from Numpy
-arrays.  Output file format is determined solely from user-supplied filename's extension.  No
-fancy data processing of any kind!!
 """
 
-# data_comp, fmt = image.compress(data_image, fmt=self.fmt, quality=self.quality)
 
-def read(fname):
-    """Read image file, return a Numpy array."""
-    img = PIL.Image.open(fname)
-    data = np.asarray(img)
-
-    return data
-
-
-def write(fname, data):
-    """Write a Numpy image array to a file."""
-
-    img = PIL.Image.fromarray(data)
-    img.save(fname)
-
-
-def png_xy(blob):
+#################################################
+# Fetch image data from a URL
+def normalize_url(url):
     """
-    Read the width/height from a PNG header
-    https://github.com/minrk/ipython_extensions/blob/master/extensions/retina.py
+    https://docs.python.org/3.0/library/
+    urllib.parse.html#urllib.parse.ParseResult.geturl
     """
-    ix = blob.index(b'IHDR')
-
-    # Next 8 bytes are width and height
-    w4h4 = blob[ix + 4:ix + 12]
-    width, height = struct.unpack('>ii', w4h4)
-
-    return width, height
+    parts = urllib.parse.urlsplit(url)
+    return parts.geturl()
 
 
+def download(url, verbose=False):
+    """
+    Download compressed image data from url.
+
+    http://stackoverflow.com/questions/13137817/
+    how-to-download-image-using-requests/13137873#13137873
+    """
+    resp = requests.get(url)
+    if not resp.ok:
+        msg = 'Problem fetching data: {}'.format(resp.reason)
+        raise requests.RequestException(msg)
+
+    # Binary compressed image data from response content.
+    data_comp = resp.content
+
+    # e.g. 'image/jpeg' --> 'jpeg'
+    format = resp.headers['content-type'].split('/')[1]
+
+    return data_comp, format
+
+#################################################
+
+
+# Compressed images
 def determine_mode(data):
     """
     Determine image color mode.
     Input data is expected to be 3D: [num_lines, num_samples, num_bands].
     """
-
     # Force data to be Numpy ndarray, if not already.
     data = np.asarray(data)
 
@@ -85,7 +86,6 @@ def setup_data(data):
 
     Returns normalized data.
     """
-
     # Force data to be Numpy ndarray, if not already.
     data = np.asarray(data)
 
@@ -109,7 +109,7 @@ def setup_data(data):
     return data
 
 
-def compress(data, mode=None, fmt=None, **kwargs):
+def compress(data, mode=None, fmt='webp', **kwargs):
     """
     Convert input image data array into a compressed data representation.
 
@@ -127,31 +127,45 @@ def compress(data, mode=None, fmt=None, **kwargs):
 
     Returns a string of compressed data.
     """
-
     # Default values.
     if not mode:
         mode = determine_mode(data)
 
-    if not fmt:
-        fmt = 'PNG'
-
-    if fmt.upper() == 'JPEG' or fmt.upper() == 'JPG':
-        if mode.upper() == 'RGBA':
+    if fmt.lower() == 'jpeg' or fmt.lower() == 'jpg':
+        if mode.lower() == 'rgba':
             # Ignore alpha channel.
             data = data[:, :, :3]
-            mode = 'RGB'
+            mode = 'rgb'
 
-    # Convert data to PIL image.
-    # http://pillow.readthedocs.org/en/latest/reference/Image.html#PIL.Image.fromarray
-    img = PIL.Image.fromarray(data, mode)
+    # Very easy to compress to a buffer via imageio.
+    data_comp = imageio.imwrite(imageio.RETURN_BYTES, data, format=fmt, **kwargs)
 
-    # http://pillow.readthedocs.org/en/latest/reference/Image.html#PIL.Image.Image.save
-    # http://pillow.readthedocs.org/en/latest/handbook/image-file-formats.html#png
-    # http://pillow.readthedocs.org/en/latest/handbook/image-file-formats.html#jpeg
+    return data_comp
 
-    # Use Pillow to compress to specified format.
-    buf = StringIO.StringIO()
-    img.save(buf, format=fmt, **kwargs)  # optimize=False,
-    data_comp = buf.getvalue()
 
-    return data_comp, fmt
+def decompress(data_comp):
+    """
+    Decompress image from supplied bytes data.
+    """
+    return imageio.imread(data_comp)
+
+
+def encode(data_comp, fmt):
+    """
+    Encode already-compressed image data as base64.
+    """
+    data_encode = base64.b64encode(data_comp)
+
+    return data_encode
+
+
+def data_url(data_encode, fmt):
+    """
+    Assemble into URL data string.
+    """
+    return 'data:image/{:s};base64,{:s}'.format(fmt, data_encode.decode())
+
+#################################################
+
+if __name__ == '__main__':
+    pass

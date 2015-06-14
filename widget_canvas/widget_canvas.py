@@ -1,53 +1,18 @@
 
-from __future__ import division, print_function, unicode_literals
+from __future__ import division, print_function, unicode_literals, absolute_import
 
-import os
 import base64
-import time
 
-import numpy as np
-import IPython.html.widgets
-import image
-# import transform
+import IPython
+from IPython.html import widgets
+from IPython.utils import traitlets
 
-#################################################
-# Helper functions
-#
-_path_module = os.path.abspath(os.path.dirname(__file__))
-_path_js = os.path.join(_path_module, 'js')
-
-
-def _read_local_js(fname):
-    """
-    Read a JavaScript file from application's local JS folder.  Return a string.
-    """
-    b, e = os.path.splitext(os.path.basename(fname))
-    f = os.path.join(_path_js, b + '.js')
-
-    if not os.path.isfile(f):
-        raise IOError('File not found: {}'.format(f))
-
-    with open(f) as fo:
-        text = fo.read()
-
-    return text
-
-
-def _bootstrap_js():
-    """
-    Load application-specific JavaScript source code and inject into current Notebook session.
-    """
-    files = ['widget_canvas.js']
-
-    for f in files:
-        print('bootstrap: {}'.format(f))
-        js = _read_local_js(f)
-        IPython.display.display_javascript(js, raw=True)
+from . import image
 
 #################################################
 
 
-class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
+class CanvasImage(widgets.widget.DOMWidget):
     """
     Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
     supplied, must be a Numpy array (or equivalent) with a shape similar to one of the following:
@@ -56,30 +21,42 @@ class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
         (rows, columns, 3) - RGB
         (rows, columns, 4) - RGBA
 
-    If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
-    min(data) -> 0 and max(data) -> 255.
+    If data type is not np.uint8, it will be cast to uint8 by
+    mapping min(data) -> 0 and max(data) -> 255.
     """
+    # _model_name:   Name of Backbone model registered in the front-end to create and sync with.
+    # _model_module: A requirejs module name in which to find _model_name.
+    # _view_name:    Default view registered in the front-end to use to represent the widget.
+    # _view_module:  A requirejs module in which to find _view_name.
 
-    _view_name = IPython.utils.traitlets.Unicode('CanvasImageBaseView', sync=True)
+    _view_name = traitlets.Unicode('CanvasImageView', sync=True)
+    _view_module = traitlets.Unicode('nbextensions/widget_canvas/widget_canvas', sync=True)
+    # _model_name = traitlets.Unicode('CanvasImageModel', sync=True)
+    # _model_module = traitlets.Unicode('nbextensions/widget_canvas/widget_canvas', sync=True)
 
-    # Image data source.
-    data_encode = IPython.utils.traitlets.Unicode(sync=True)
+    # Encoded image data
+    _encoded = traitlets.Bytes(help='Encoded image data', sync=True)
+    _format = traitlets.Unicode(help='Image encoding format', sync=True)
 
-    # Image smoothing.
-    smoothing = IPython.utils.traitlets.Bool(sync=True)
+    # Image geometry.
+    _data_width = traitlets.CInt(help='data width', sync=True)
+    _data_height = traitlets.CInt(help='data height', sync=True)
+    _canvas_width = traitlets.CInt(help='canvas width', sync=True)
+    _canvas_height = traitlets.CInt(help='canvas height', sync=True)
 
-    # Image data and image display geometry.
-    _canvas_shape = IPython.utils.traitlets.Tuple(sync=True)
-    # width = IPython.utils.traitlets.CFloat(sync=True)
-    # height = IPython.utils.traitlets.CFloat(sync=True)
+    # Canvas rendering parameters
+    # _smoothing = traitlets.Bool(True, help='Enable/disable image smoothing', sync=True)
 
-    def __init__(self, data_image=None, fmt='webp', quality=75, **kwargs):
+    # Mouse event information
+    _mouse_event = traitlets.Dict(help='Front-end mouse event information', sync=True)
+
+    def __init__(self, data=None, url=None, format='webp', quality=75, **kwargs):
         """
-        Instantiate a new Image object.
+        Instantiate a new Image Widget object.
 
-        Display images using HTML5 Canvas with IPython Notebook widget system. Input image data,
-        if supplied, must be a Numpy array (or equivalent) with a shape similar to one of the
-        following:
+        Display images using HTML5 Canvas with IPython Notebook widget system. Keyword `value`
+        contains the input image data.  It must be a Numpy array (or equivalent) with a shape
+        similar to one of the following:
             (rows, columns)    - Greyscale
             (rows, columns, 1) - Greyscale
             (rows, columns, 3) - RGB
@@ -88,91 +65,82 @@ class CanvasImageBase(IPython.html.widgets.widget.DOMWidget):
         If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
         min(data) -> 0 and max(data) -> 255.
 
+        If you supply a URL to an image this will override any other parameters.
+
         note: Q = 75 yields great results using WebP image codec.
         """
-        super(CanvasImageBase, self).__init__(**kwargs)
+        super(CanvasImage, self).__init__(**kwargs)
 
-        # http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
-        self._data_shape = None, None
+        # Internal Python handler for JS mouse events synced through _mouse_event traitlet.
+        # https://developer.mozilla.org/en-US/docs/Web/Reference/Events
+        # https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
+        self.on_trait_change(self._handle_mouse, str('_mouse_event'))  # JS --> Python
 
-        # Store supplied init data in traitlet(s).
-        self.fmt = fmt
+        # Allow user to attach Python callback functions in response to mousevents.
+        self._mouse_event_dispatchers = {}  # Python (this module) --> user's Python function(s)
+        for kind in ['mousemove', 'mouseup', 'mousedown', 'click', 'wheel']:
+            self._mouse_event_dispatchers[kind] = widgets.widget.CallbackDispatcher()
+
+        # Store init data in traitlet(s)
+        self.format = format
         self.quality = quality
-        if data_image is not None:
-            self.image = data_image
+
+        if url:
+            # Fetch image from URL and decompress into numpy array
+            data_comp, format_orig = image.download(url)
+            data = image.decompress(data_comp)
+
+        # Set image data
+        self.data = data
+
+    @property
+    def data(self):
+        """Image data"""
+        return self._data
+
+    @data.setter
+    def data(self, data):
+        if data is None:
+            # Clobber image data
+            self._data = None
+            self._encoded = b''
+            self._data_height = 0
+            self._data_width = 0
+            self._canvas_height = 0
+            self._canvas_width = 0
+        else:
+            # Compress input image data and encode via Base64
+            self._data = data.copy()
+            data_comp = image.compress(self._data, fmt=self.format)
+
+            with self.hold_sync():
+                # Hold syncing state changes until the context manager is released
+                HxW = data.shape[:2]
+                self._data_height, self._data_width = HxW
+                self._canvas_height, self._canvas_width = HxW
+                self.height, self.width = HxW
+
+                self._encoded = base64.b64encode(data_comp)
+
+    @property
+    def format(self):
+        """Image encoding format."""
+        return self._format
+
+    _valid_formats = ['png', 'jpg', 'jpeg', 'webp']
+
+    @format.setter
+    def format(self, value):
+        if value.lower() not in self._valid_formats:
+            raise ValueError('Invalid encoding format: {}'.format(value))
+        self._format = value.lower()
 
     def __repr__(self):
-        template = \
-"""
-Data:   {:d} x {:d} pixels
-Canvas: {:d} x {:d} pixels
+        template = """
+Bytes:  {:d}
 Format: {:s}
-Size:   {:d} bytes
 """
-        value = template.format(self.data_shape[0], self.data_shape[1],
-                                self.canvas_shape[0], self.canvas_shape[1],
-                                self.fmt,
-                                len(self.data_encode))
-
-        return value
-
-    @property
-    def image(self):
-        return self._image
-
-    @image.setter
-    def image(self, data_image):
-        # Store the image data for later use.
-        self._image = data_image
-
-        if data_image is None:
-            # Maybe call a reset function here??
-            return
-
-        self._data_shape = self._image.shape[:2]
-
-        # Compress input image data and encode via Base64.
-        data_comp, fmt = image.compress(self._image, fmt=self.fmt, quality=self.quality)
-        data_b64 = base64.b64encode(data_comp)
-
-        self.data_encode = 'data:image/{:s};base64,{:s}'.format(fmt, data_b64)
-
-    # def _update_geometry(self, **kwargs):
-    #     """
-    #     Update geometry details and sync corresponding Trait with front end.
-    #     """
-    #     valid_keys = ['canvas_shape', 'display_shape']
-    #     for key in valid_keys:
-    #         if key in kwargs:
-    #             val = kwargs[key]
-    #             if len(val) == 2:
-    #                 # set attributes like self._data_shape
-    #                 setattr(self, '_'+key, val)
-    #             else:
-    #                 raise ValueError('geometry property must be size 2: {}'.format(val))
-    #     # Sync canvas & display geometry to front end.
-    #     self._geometry = self._canvas_shape
-
-    @property
-    def data_shape(self):
-        """
-        Data width and height.  Defined by the user-supplied image data.
-        """
-        return self._data_shape
-
-    @property
-    def canvas_shape(self):
-        """
-        Canvas width and height.
-        """
-        return self._canvas_shape
-
-    @canvas_shape.setter
-    def canvas_shape(self, shape):
-        if len(shape) == 2:
-            self._canvas_shape = shape
-        else:
-            raise ValueError('Shape must be two-element sequence: {}'.format(shape))
+        return template.format(len(self._encoded), self.format)
 
     def display(self):
         """
@@ -180,230 +148,53 @@ Size:   {:d} bytes
         """
         IPython.display.display(self)
 
-#################################################
-
-
-class CanvasImageFancy(CanvasImageBase):
-    """
-    Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
-    supplied, must be a Numpy array (or equivalent) with a shape similar to one of the following:
-        (rows, columns)    - Greyscale
-        (rows, columns, 1) - Greyscale
-        (rows, columns, 3) - RGB
-        (rows, columns, 4) - RGBA
-
-    If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
-    min(data) -> 0 and max(data) -> 255.
-    """
-
-    _view_name = IPython.utils.traitlets.Unicode('CanvasImageFancyView', sync=True)
-
-    # Image transformation values.
-    _transform_values = IPython.utils.traitlets.List(sync=True)
-
-    # Mouse and keyboard event information.
-    _mouse = IPython.utils.traitlets.Dict(sync=True)
-
-    def __init__(self, data_image=None, **kwargs):
-        """
-        Instantiate a new Image object.
-
-        Display images using HTML5 Canvas with IPython Notebook widget system. Input image data, if
-        supplied, must be a Numpy array (or equivalent) with a shape similar to one of the
-        following:
-            (rows, columns)    - Greyscale
-            (rows, columns, 1) - Greyscale
-            (rows, columns, 3) - RGB
-            (rows, columns, 4) - RGBA
-
-        If data type is neither of np.uint8 or np.int16, it will be cast to uint8 by mapping
-        min(data) -> 0 and max(data) -> 255.
-        """
-        super(CanvasImageFancy, self).__init__(data_image=data_image, **kwargs)
-
-        # Setup internal Python handler for front-end mouse events synced through
-        # the Traitlet self._mouse.
-        self.on_trait_change(self._handle_mouse, str('_mouse'))
-
-        # Setup dispatchers to manage user-defined Python event handlers.
-        # mouse_move_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        # mouse_drag_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        # mouse_click_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        # mouse_down_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        # mouse_up_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-        # mouse_wheel_dispatcher = IPython.html.widgets.widget.CallbackDispatcher()
-
-        self._mouse_event_dispatchers = {'move': IPython.html.widgets.widget.CallbackDispatcher(),
-                                         'drag': IPython.html.widgets.widget.CallbackDispatcher(),
-                                         'down': IPython.html.widgets.widget.CallbackDispatcher(),
-                                         'up': IPython.html.widgets.widget.CallbackDispatcher(),
-                                         'click': IPython.html.widgets.widget.CallbackDispatcher(),
-                                         'wheel': IPython.html.widgets.widget.CallbackDispatcher()}
-
-        # Mouse state helper variables.
-        self._flag_mouse_down = False
-        self._drag_origin_xy = None
-        self._drag_xy = None        # distance from drag_origin
-        self._drag_delta_xy = None  # distance from position of previous mouse drag motion event
-        self._drag_prior_mouse_xy = 0, 0
-
-        self.mouse_xy = 0, 0
-
-        # Manage image 2D affine transform information.
-        # self._transform = transform.Transform()
-
-    @property
-    def transform(self):
-        print('get')
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        print('set')
-        self._transform = value
-
     #####################################################
-    # Methods to handle Traitlet data sync events.
-    #
+    # Python response to mouse events generated by JavaScript front-end.
+    # https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
     def _handle_mouse(self, name_trait, event):  # info_old, info_new):
-        """Python back-end handling of JavaScript front-end generated mouse events.
         """
-
-        # Update internal storage for mouse coordinates.
-        self.mouse_xy = event['canvasX'], event['canvasY']
-        event['canvas_xy'] = self.mouse_xy
-        event.pop('canvasX', None)
-        event.pop('canvasY', None)
-
-        # Call all registered back-end event handlers with updated information.
-        if event['type'] == 'mousemove':
-            # The mouse has moved, but what kind of move, eh?
-            if self._flag_mouse_down:
-                # Mouse Drag Event: the mouse moved with the button down.
-                if not self._drag_origin_xy:
-                    raise ValueError('drag origin should have been defined prior to \
-                                      calling this function')
-
-                self._drag_prior_mouse_xy = self._drag_xy
-
-                self._drag_xy = (self.mouse_xy[0] - self._drag_origin_xy[0],
-                                 self.mouse_xy[1] - self._drag_origin_xy[1])
-
-                self._drag_delta_xy = (self._drag_xy[0] - self._drag_prior_mouse_xy[0],
-                                       self._drag_xy[1] - self._drag_prior_mouse_xy[1])
-
-                # Assemble drag event details.
-                event['type'] = str('mousedrag')
-                event['drag_origin_xy'] = self._drag_origin_xy
-                event['drag_xy'] = self._drag_xy
-                event['drag_delta_xy'] = self._drag_delta_xy
-
-                # Call dispatcher.
-                self._mouse_drag_dispatcher(self, event)
-            else:
-                # Mouse Move Event, ie. the button is up.
-                # Call dispatcher.
-                self._mouse_move_dispatcher(self, event)
-
-        elif event['type'] == 'mousedown':
-            # Mouse Down Event.
-
-            # Update drag event variable.
-            # Just in case the mouse moves afterwards and generates a proper drag event.
-            self._drag_prior_mouse_xy = self.mouse_xy
-            self._drag_origin_xy = self.mouse_xy
-            self._drag_xy = 0, 0
-
-            # Update state variable and call dispatcher.
-            self._flag_mouse_down = True
-            self._mouse_down_dispatcher(self, event)
-
-        elif event['type'] == 'mouseup':
-            # Mouse Up Event.
-
-            # Call dispatcher.
-            self._mouse_up_dispatcher(self, event)
-
-            if self._flag_mouse_down:
-                # Mouse Click Event, mouse down + mouse up = mose click.
-                # Call dispatcher.
-                self._mouse_click_dispatcher(self, event)
-
-            # Update mouse state variables.
-            self._flag_mouse_down = False
-            self._drag_origin_xy = None
-            self._drag_delta_xy = None
-            self._drag_xy = None
-            self._drag_prior_mouse_xy = None
-
-        elif event['type'] == 'wheel':
-            # Mouse Wheel Event.
-            # Call dispatcher.
-            self._mouse_wheel_dispatcher(self, event)
-
-        else:
-            pass
+        Python response to mouse events generated by JavaScript front-end.
+        """
+        # Event type should match one of ['mousemove', 'mouseup', 'mousedown', 'click', 'wheel']
+        try:
+            kind = event['type']
+            self._mouse_event_dispatchers[kind](self, event)
+        except KeyError:
+            print(event)
+            raise
 
     #######################################################
-    # Allow user to register Python event handler functions.
+    # Register Python mouse event handler functions.
     #
-    # The signature for registration function is:
-    #   event_type: a string identifying event type.
     #   callback : function to be called with two arguments: widget instance and event information.
     #   remove : bool (optional), set to true to unregister the callback function.
-    #
-    def show_mouse_event_types(self):
-        """Helper function to return list of valid mouse event types.
-        """
-        return self._mouse_event_dispatchers.keys()
-
-    def on_mouse(self, callback, event_type=None, remove=False):
-        """Register mouse event callback function with appropriate dispatcher.
-        If event_type is not specified, register with all.
-        """
-        if event_type:
-            try:
-                d = self._mouse_event_dispatchers[event_type]
-            except KeyError:
-                raise ValueError('Invalid event type: {}'.format(event_type))
-            except:
-                raise
-
-            # Call dispatcher for user-specified event type.
+    #   https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
+    def on_mouse_all(self, callback, remove=False):
+        """Register callback function for all mouse events."""
+        for k, d in self._mouse_event_dispatchers.items():
             d.register_callback(callback, remove=remove)
-        else:
-            # Call dispatcher for all specified event types.
-            for d in self._mouse_event_dispatchers.values():
-                d.register_callback(callback, remove=remove)
 
+    def on_mouse_move(self, callback, remove=False):
+        """Register callback function for mouse move."""
+        self._mouse_event_dispatchers['mousemove'].register_callback(callback, remove=remove)
 
-    # def on_mouse_move(self, callback, remove=False):
-    #     """Repond to mouse motion.
-    #     """
-    #     self._mouse_move_dispatcher.register_callback(callback, remove=remove)
-    # def on_mouse_drag(self, callback, remove=False):
-    #     """Repond to drag motion: motion while button is down.
-    #     """
-    #     self._mouse_drag_dispatcher.register_callback(callback, remove=remove)
-    # def on_mouse_down(self, callback, remove=False):
-    #     """Repond to mouse button down.
-    #     """
-    #     self._mouse_down_dispatcher.register_callback(callback, remove=remove)
-    # def on_mouse_up(self, callback, remove=False):
-    #     """Repond to mouse button up.
-    #     """
-    #     self._mouse_up_dispatcher.register_callback(callback, remove=remove)
-    # def on_mouse_click(self, callback, remove=False):
-    #     """Repond to mouse button click: button down followed by button up.
-    #     """
-    #     self._mouse_click_dispatcher.register_callback(callback, remove=remove)
-    # def on_mouse_wheel(self, callback, remove=False):
-    #     """Repond to mouse wheel scroll event.
-    #     """
-    #     self._mouse_wheel_dispatcher.register_callback(callback, remove=remove)
+    def on_mouse_up(self, callback, remove=False):
+        """Register callback function for mouse up."""
+        self._mouse_event_dispatchers['mouseup'].register_callback(callback, remove=remove)
+
+    def on_mouse_down(self, callback, remove=False):
+        """Register callback function for mouse down."""
+        self._mouse_event_dispatchers['mousedown'].register_callback(callback, remove=remove)
+
+    def on_click(self, callback, remove=False):
+        """Register callback function for mouse click."""
+        self._mouse_event_dispatchers['click'].register_callback(callback, remove=remove)
+
+    def on_wheel(self, callback, remove=False):
+        """Register callback function for mouse wheel."""
+        self._mouse_event_dispatchers['wheel'].register_callback(callback, remove=remove)
 
 #################################################
 
-# Bootstrap Widget's JavaScript code into Notebook browser environment.
-_bootstrap_js()
-time.sleep(0.01)  # sleep a tiny bit to give time for JavaScript stuff to set up in the background.
+if __name__ == '__main__':
+    pass

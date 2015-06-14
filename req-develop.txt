@@ -1,13 +1,14 @@
 
 # project
 imageio
-
-# common
-matplotlib
+requests
 numpy
-
-# ipython
 ipython==3.1.0
+
+# helpful packages
+matplotlib
+
+# ipython notebook support
 mistune
 pyreadline
 pyzmq

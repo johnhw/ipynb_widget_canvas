@@ -16,15 +16,15 @@ except:
 #################################################
 
 setup(name='widget_canvas',
-      description='A canvas image display widget for the IPython Notebook',
+      description='A canvas image widget for the IPython Notebook',
       version='0.2.0',
 
       author='Pierre V. Villeneuve',
       author_email='pierre.villeneuve@gmail.com',
       license='MIT',
-      # url='https://github.com/Who8MyLunch/ipynb_canvas_widget',
+      url='https://github.com/Who8MyLunch/ipynb_canvas_widget',
 
-      install_requires=['ipython', 'numpy'],
+      install_requires=['ipython', 'numpy', 'imageio', 'requests'],
       packages=['widget_canvas'],
       cmdclass=cmdclass('widget_canvas'),
       include_package_data=True,

@@ -2,15 +2,13 @@
 __pycache__/
 *.py[cod]
 
-# C extensions
-*.so
-
 # IPython Notebook Backups
 .ipynb_checkpoints
 
 # Distribution / packaging
 .Python
 env/
+venv/
 bin/
 build/
 develop-eggs/
@@ -37,21 +35,5 @@ htmlcov/
 nosetests.xml
 coverage.xml
 
-# Translations
-*.mo
-
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
-
-# Rope
-.ropeproject
-
-# Django stuff:
-*.log
-*.pot
-
 # Sphinx documentation
 docs/_build/
-
