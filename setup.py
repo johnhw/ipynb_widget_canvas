@@ -24,7 +24,7 @@ setup(name='widget_canvas',
       license='MIT',
       url='https://github.com/Who8MyLunch/ipynb_canvas_widget',
 
-      install_requires=['ipython', 'numpy', 'imageio', 'requests'],
+      install_requires=['imageio', 'ipython', 'numpy', 'requests'],
       packages=['widget_canvas'],
       cmdclass=cmdclass('widget_canvas'),
       include_package_data=True,
