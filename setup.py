@@ -1,18 +1,31 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from setuptools import setup
 
-from setuptools import setup, find_packages
+# jupyter-pip
+# Allows IPython notebook extension writers to make their extension pip installable!
+# https://github.com/jdfreder/jupyter-pip
+try:
+    from jupyterpip import cmdclass
+except:
+    import pip
+    import importlib
+    pip.main(['install', 'jupyter-pip'])
+    cmdclass = importlib.import_module('jupyterpip').cmdclass
 
-# Do it.
-version = '0.0.1'
+#################################################
 
-setup(name='ipynb_widget_canvas',
-      packages=find_packages(),
-      package_data={'': ['*.txt', '*.md', '*.py', '*.ipynb',  '*.jpg', '*.png',
-                         '*.html', '*.js']},
+setup(name='widget_canvas',
+      description='A canvas image display widget for the IPython Notebook',
+      version='0.2.0',
 
-      # Metadata
-      version=version,
-      license='MIT',
       author='Pierre V. Villeneuve',
       author_email='pierre.villeneuve@gmail.com',
-      description='A Canvas Widget for the IPython Notebook',
-      url='https://github.com/Who8MyLunch/ipynb_canvas_widget')
+      license='MIT',
+      # url='https://github.com/Who8MyLunch/ipynb_canvas_widget',
+
+      install_requires=['ipython', 'numpy'],
+      packages=['widget_canvas'],
+      cmdclass=cmdclass('widget_canvas'),
+      include_package_data=True,
+      )
