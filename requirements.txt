@@ -1,0 +1,18 @@
+
+# project
+imageio
+
+# common
+matplotlib
+numpy
+
+# ipython
+ipython==3.1.0
+mistune
+pyreadline
+pyzmq
+pygments
+jinja2
+tornado
+terminado
+jsonschema
