@@ -30,8 +30,7 @@ def download(url, verbose=False):
     """
     Download compressed image data from URL.
 
-    http://stackoverflow.com/questions/13137817/
-    how-to-download-image-using-requests/13137873#13137873
+    http://stackoverflow.com/questions/13137817/how-to-download-image-using-requests/13137873#13137873
     """
     resp = requests.get(url)
     if not resp.ok:
@@ -42,14 +41,13 @@ def download(url, verbose=False):
     data_comp = resp.content
 
     # Compression format, e.g. 'image/jpeg' --> 'jpeg'
-    format = resp.headers['content-type'].split('/')[1]
+    fmt = resp.headers['content-type'].split('/')[1]
 
-    return data_comp, format
+    return data_comp, fmt
 
 #################################################
 
 
-# Compressed images
 def determine_mode(data):
     """
     Determine image color mode.
@@ -110,7 +108,7 @@ def setup_data(data):
     return data
 
 
-def compress(data, mode=None, fmt='webp', **kwargs):
+def compress(data, fmt='webp', **kwargs):
     """
     Convert input image data array into a compressed data representation.
 
@@ -120,24 +118,12 @@ def compress(data, mode=None, fmt='webp', **kwargs):
         (rows, columns, 3) - RGB
         (rows, columns, 4) - RGBA
 
-    valid modes: L, RGB, RGBA
-
     fmt: 'png', 'jpeg', etc.
 
     Alpha channel will be ignored if fmt == 'jpeg'.
 
     Returns a string of compressed data.
     """
-    # Default values.
-    if not mode:
-        mode = determine_mode(data)
-
-    if fmt.lower() == 'jpeg' or fmt.lower() == 'jpg':
-        if mode.lower() == 'rgba':
-            # Ignore alpha channel.
-            data = data[:, :, :3]
-            mode = 'rgb'
-
     # Very easy to compress to a buffer via imageio.
     data_comp = imageio.imwrite(imageio.RETURN_BYTES, data, format=fmt, **kwargs)
 
