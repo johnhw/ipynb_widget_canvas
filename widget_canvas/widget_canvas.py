@@ -1,6 +1,10 @@
 
 from __future__ import division, print_function, unicode_literals, absolute_import
 
+from warnings import filterwarnings
+filterwarnings('ignore', module='IPython.html.widgets')
+
+import IPython
 from IPython.html import widgets
 from IPython.utils import traitlets
 
