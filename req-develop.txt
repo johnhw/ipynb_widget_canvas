@@ -1,9 +1,9 @@
 
 # project
 imageio
-requests
-numpy
 ipython==3.2.0
+numpy
+requests
 
 # helpful packages
 matplotlib
