@@ -108,7 +108,7 @@ def setup_data(data):
     return data
 
 
-def compress(data, fmt='webp', **kwargs):
+def compress(data, fmt='jpg', quality=90, **kwargs):
     """
     Convert input image data array into a compressed data representation.
 
@@ -125,7 +125,8 @@ def compress(data, fmt='webp', **kwargs):
     Returns a string of compressed data.
     """
     # Very easy to compress to a buffer via imageio.
-    data_comp = imageio.imwrite(imageio.RETURN_BYTES, data, format=fmt, **kwargs)
+    data_comp = imageio.imwrite(imageio.RETURN_BYTES, data,
+                                format=fmt, quality=quality, **kwargs)
 
     return data_comp
 

@@ -5,11 +5,11 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 Derived from http://stackoverflow.com/questions/5849800/tic-toc-functions-analog-in-python
 """
 
-import os
 import time
 
+
 class Timer(object):
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=True):
         self.verbose = verbose
         self.time_start = None
         self.time_end = None
@@ -23,8 +23,7 @@ class Timer(object):
         self.time_end = time.time()
 
         if self.verbose:
-            self.pretty_print()
-
+            print(self.pretty())
 
     @property
     def time(self):
@@ -33,10 +32,24 @@ class Timer(object):
         else:
             return self.time_end - self.time_start
 
+    def pretty(self):
+        template = 'Run time: {:.3f} {}'
 
-    def pretty_print(self):
-        print('Run time: {:.4f} sec.'.format(self.time))
+        t = self.time
 
+        if t > 0.5:
+            text = template.format(t, 's')
+        elif t*1.e3 > 0.5:
+            text = template.format(t*1.e3, 'ms')
+        elif t*1.e6 > 0.5:
+            text = template.format(t*1.e6, 'us')
+        else:
+            text = template.format(t*1.e9, 'ns')
+
+        return text
+
+    def __repr__(self):
+        return self.pretty()
 
 
 if __name__ == '__main__':
@@ -50,10 +63,10 @@ if __name__ == '__main__':
         time.sleep(t)
         return t
 
-
     with Timer(verbose=True) as t:
         print('sdsdfsdsdfs')
         d = fn()
+        print(d)
 
     print(t.time)
 
