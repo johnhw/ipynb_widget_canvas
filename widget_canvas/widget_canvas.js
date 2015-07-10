@@ -3,7 +3,7 @@ define(function (require) {
 
     var CanvasImageView = widget.DOMWidgetView.extend({
         render: function () {
-            console.log('render D');
+            // console.log('render D');
 
             // Backbone Model --> JavaScript View
             // Render a widget's view instance to the DOM.
@@ -31,6 +31,13 @@ define(function (require) {
             // Mouse event throttle.
             this._mouse_timestamp = 0
             this._mouse_time_threshold = 100 // milliseconds
+
+            // Prevent mouse cursor changing to text selection mode.
+            // http://stackoverflow.com/a/11805438/282840
+            // when-i-click-on-a-canvas-and-drag-my-mouse-the-cursor-changes-to-a-text-selecti
+            this.canvas.onmousedown = function (event) {
+                event.preventDefault();
+            };
 
             this.update();
             this.update_encoded();
@@ -123,7 +130,7 @@ define(function (require) {
             wheel: 'handle_mouse_generic',
             click: 'handle_mouse_generic',
             // mouseenter: 'XXX',  // don't worry about these events for now.
-            // mouseleave: 'XXX', 
+            // mouseleave: 'XXX',
             // mouseout:   'XXX',
             // mouseover:  'XXX',
         },

@@ -45,13 +45,16 @@ class CanvasImage(widgets.widget.DOMWidget):
     _canvas_width = traitlets.CInt(help='canvas width', sync=True)
     _canvas_height = traitlets.CInt(help='canvas height', sync=True)
 
+    width = traitlets.CInt(help='widget width', sync=True)
+    height = traitlets.CInt(help='widget height', sync=True)
+
     # Canvas rendering parameters
     # _smoothing = traitlets.Bool(True, help='Enable/disable image smoothing', sync=True)
 
     # Mouse event information
     _mouse_event = traitlets.Dict(help='Front-end mouse event information', sync=True)
 
-    def __init__(self, data=None, url=None, format='webp', quality=75, **kwargs):
+    def __init__(self, data=None, url=None, format='jpeg', quality=90, **kwargs):
         """
         Instantiate a new Image Widget object.
 
@@ -138,10 +141,13 @@ class CanvasImage(widgets.widget.DOMWidget):
 
     def __repr__(self):
         template = """
-Bytes:  {:d}
+Canvas Widget
+Width:  {:d}
+Height: {:d}
 Format: {:s}
+Encoded: {:.1f} KB
 """
-        return template.format(len(self._encoded), self.format)
+        return template.format(self.width, self.height, self.format, len(self._encoded)/1024)
 
     def display(self):
         """
@@ -171,28 +177,46 @@ Format: {:s}
     #   remove : bool (optional), set to true to unregister the callback function.
     #   https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
     def on_mouse_all(self, callback, remove=False):
-        """Register callback function for all mouse events."""
+        """
+        Register callback function for all mouse events, arguments to callback are the widget
+        instance and event information.
+        """
         for k, d in self._mouse_event_dispatchers.items():
             d.register_callback(callback, remove=remove)
 
     def on_mouse_move(self, callback, remove=False):
-        """Register callback function for mouse move."""
+        """
+        Register callback function for mouse move, arguments to callback are the widget
+        instance and event information.
+        """
         self._mouse_event_dispatchers['mousemove'].register_callback(callback, remove=remove)
 
     def on_mouse_up(self, callback, remove=False):
-        """Register callback function for mouse up."""
+        """
+        Register callback function for mouse up, arguments to callback are the widget
+        instance and event information.
+        """
         self._mouse_event_dispatchers['mouseup'].register_callback(callback, remove=remove)
 
     def on_mouse_down(self, callback, remove=False):
-        """Register callback function for mouse down."""
+        """
+        Register callback function for mouse down, arguments to callback are the widget
+        instance and event information.
+        """
         self._mouse_event_dispatchers['mousedown'].register_callback(callback, remove=remove)
 
     def on_click(self, callback, remove=False):
-        """Register callback function for mouse click."""
+        """
+        Register callback function for mouse click, arguments to callback are the widget
+        instance and event information.
+        """
         self._mouse_event_dispatchers['click'].register_callback(callback, remove=remove)
 
     def on_wheel(self, callback, remove=False):
-        """Register callback function for mouse wheel."""
+        """R
+        egister callback function for mouse wheel, arguments to callback are the widget
+        instance and event information.
+        """
         self._mouse_event_dispatchers['wheel'].register_callback(callback, remove=remove)
 
 #################################################
