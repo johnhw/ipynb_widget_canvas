@@ -139,15 +139,15 @@ class CanvasImage(widgets.widget.DOMWidget):
             raise ValueError('Invalid encoding format: {}'.format(value))
         self._format = value.lower()
 
-    def __repr__(self):
-        template = """
-Canvas Widget
-Width:  {:d}
-Height: {:d}
-Format: {:s}
-Encoded: {:.1f} KB
-"""
-        return template.format(self.width, self.height, self.format, len(self._encoded)/1024)
+#     def __repr__(self):
+#         template = """
+# Canvas Widget
+# Width:  {:d}
+# Height: {:d}
+# Format: {:s}
+# Encoded: {:.1f} KB
+# """
+#         return template.format(self.width, self.height, self.format, len(self._encoded)/1024)
 
     def display(self):
         """

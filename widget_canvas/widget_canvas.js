@@ -30,7 +30,7 @@ define(function (require) {
 
             // Mouse event throttle.
             this._mouse_timestamp = 0
-            this._mouse_time_threshold = 100 // milliseconds
+            this._mouse_time_threshold = 50 // milliseconds
 
             // Prevent mouse cursor changing to text selection mode.
             // http://stackoverflow.com/a/11805438/282840
