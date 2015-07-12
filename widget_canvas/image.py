@@ -150,11 +150,9 @@ def data_url(data_encode, fmt):
     """
     Assemble into URL data string.
     """
-
     # The decoding step here is necesary since we need to interpret byte data as text.
     # See this link for a nice explanation.
     # http://stackoverflow.com/questions/14010551/how-to-convert-between-bytes-and-strings-in-python-3
-
     encoding = 'utf-8'
     template = 'data:image/{:s};charset={};base64,{:s}'
 

@@ -43,6 +43,11 @@ define(function (require) {
                 event.preventDefault();
             };
 
+            // Prevent right-click context menu.
+            this.canvas.oncontextmenu = function (event) {
+                event.preventDefault();
+            };
+
             this.update();
             this.update_encoded();
         },
@@ -92,7 +97,7 @@ define(function (require) {
 
             this.context.mozImageSmoothingEnabled = value
             this.context.oImageSmoothingEnabled = value
-            this.context.webkitImageSmoothingEnabled = value
+            // this.context.webkitImageSmoothingEnabled = value
             this.context.imageSmoothingEnabled = value
         },
 
@@ -157,12 +162,11 @@ define(function (require) {
 
             // Check for `wheel` event.
             // https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel
-            var attr_wheel = ['deltaMode', 'deltaX', 'deltaY', 'deltaZ']
-            if (info['type'] == 'wheel') {
-                for (ix in attr_wheel) {
-                    key = attr_wheel[ix]
-                    info[key] = ev[key]
-                }
+            if (jev.originalEvent.type == 'wheel') {
+                ev.deltaMode = jev.originalEvent.deltaMode
+                ev.deltaX = jev.originalEvent.deltaX
+                ev.deltaY = jev.originalEvent.deltaY
+                ev.deltaZ = jev.originalEvent.deltaZ
             }
 
             return ev

@@ -74,8 +74,6 @@ class CanvasImage(widgets.widget.DOMWidget):
         min(data) -> 0 and max(data) -> 255.
 
         If you supply a URL to an image this will override any other parameters.
-
-        note: Q = 75 yields great results using WebP image codec.
         """
         super(CanvasImage, self).__init__(**kwargs)
 
@@ -168,7 +166,9 @@ class CanvasImage(widgets.widget.DOMWidget):
     #
     #   callback : function to be called with two arguments: widget instance and event information.
     #   remove : bool (optional), set to true to unregister the callback function.
+    #
     #   https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
+    #   https://developer.mozilla.org/en-US/docs/Web/Events/wheel
     def on_mouse_all(self, callback, remove=False):
         """
         Register callback function for all mouse events, arguments to callback are the widget
