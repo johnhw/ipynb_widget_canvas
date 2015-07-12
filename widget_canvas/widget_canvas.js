@@ -40,6 +40,11 @@ define(function (require) {
                 event.preventDefault();
             };
 
+            // Prevent page from scrolling with mouse wheel events over canvas.
+            this.canvas.onwheel = function (event) {
+                event.preventDefault();
+            };
+
             this.update();
             this.update_encoded();
         },
@@ -47,9 +52,9 @@ define(function (require) {
         update: function () {
             // Python --> JavaScript
             // Copy new value from Backbone model, apply to this View.
-            // This method handles updates for everything excluding receiving newimage data.
+            // This method handles updates for everything except image data.
 
-            // Update canvas widths and heights.
+            // Update canvas width and height.
             if (this.model.get('_canvas_width') !== undefined) {
                 this.canvas.width = this.model.get('_canvas_width')
             } else {
@@ -148,6 +153,17 @@ define(function (require) {
                 altKey: jev.originalEvent.altKey,
                 ctrlKey: jev.originalEvent.ctrlKey,
                 timeStamp: jev.originalEvent.timeStamp,
+                buttons: jev.originalEvent.buttons, // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
+            }
+
+            // Check for `wheel` event.
+            // https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel
+            var attr_wheel = ['deltaMode', 'deltaX', 'deltaY', 'deltaZ']
+            if (info['type'] == 'wheel') {
+                for (ix in attr_wheel) {
+                    key = attr_wheel[ix]
+                    info[key] = ev[key]
+                }
             }
 
             return ev

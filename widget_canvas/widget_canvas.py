@@ -35,11 +35,11 @@ class CanvasImage(widgets.widget.DOMWidget):
     # _model_name = traitlets.Unicode('CanvasImageModel', sync=True)
     # _model_module = traitlets.Unicode('nbextensions/widget_canvas/widget_canvas', sync=True)
 
-    # Encoded image data
+    # Encoded image data.
     _encoded = traitlets.Bytes(help='Encoded image data', sync=True)
     _format = traitlets.Unicode(help='Image encoding format', sync=True)
 
-    # Image geometry.
+    # Image geometry traitlets.
     _data_width = traitlets.CInt(help='data width', sync=True)
     _data_height = traitlets.CInt(help='data height', sync=True)
     _canvas_width = traitlets.CInt(help='canvas width', sync=True)
@@ -109,23 +109,22 @@ class CanvasImage(widgets.widget.DOMWidget):
             # Clobber image data
             self._data = None
             self._encoded = b''
-            self._data_height = 0
-            self._data_width = 0
-            self._canvas_height = 0
-            self._canvas_width = 0
+            self._data_height, self._data_width = 0, 0
+            self._canvas_height, self._canvas_width = 0, 0
+            self.height, self.width = 0, 0
         else:
             # Compress input image data and encode via Base64
+            HxW = data.shape[:2]
             self._data = data.copy()
             data_comp = image.compress(self._data, fmt=self.format)
+            data_encoded = image.encode(data_comp)
 
             with self.hold_sync():
                 # Hold syncing state changes until the context manager is released
-                HxW = data.shape[:2]
                 self._data_height, self._data_width = HxW
                 self._canvas_height, self._canvas_width = HxW
                 self.height, self.width = HxW
-
-                self._encoded = image.encode(data_comp)
+                self._encoded = data_encoded
 
     @property
     def format(self):
@@ -140,15 +139,11 @@ class CanvasImage(widgets.widget.DOMWidget):
             raise ValueError('Invalid encoding format: {}'.format(value))
         self._format = value.lower()
 
-#     def __repr__(self):
-#         template = """
-# Canvas Widget
-# Width:  {:d}
-# Height: {:d}
-# Format: {:s}
-# Encoded: {:.1f} KB
-# """
-#         return template.format(self.width, self.height, self.format, len(self._encoded)/1024)
+    @property
+    def data_width(self):
+        """Data's inherent width"""
+        return
+
 
     def display(self):
         """
