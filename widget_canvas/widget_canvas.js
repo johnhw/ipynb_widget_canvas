@@ -46,8 +46,7 @@ define(function (require) {
         update: function () {
             // Python --> JavaScript
             // Copy new value from Backbone model, apply to this View.
-            // This method handles updates for everything that does not require redrawing the
-            // image to the canvas.
+            // This method handles updates for everything excluding updates to new image data.
 
             // Update canvas widths and heights.
             if (this.model.get('_canvas_width') !== undefined) {

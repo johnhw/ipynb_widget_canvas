@@ -17,7 +17,7 @@ except:
 
 setup(name='widget_canvas',
       description='A canvas image widget for the IPython Notebook',
-      version='0.2.0',
+      version='0.3.0',
 
       author='Pierre V. Villeneuve',
       author_email='pierre.villeneuve@gmail.com',
