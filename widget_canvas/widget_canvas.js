@@ -16,9 +16,10 @@ define(function (require) {
             this.canvas = this.el
             this.context = this.canvas.getContext('2d');
 
-            // Dedicated event handler for changes to encoded image data.
+            // Dedicated event handler(s) for special cases, e.g. changes to encoded image data.
             // http://backbonejs.org/#Events-on
             this.model.on('change:_encoded', this.update_encoded, this);
+            this.model.on('change:_smoothing', this.update_smoothing, this);
 
             // Internal image object serving to render new image src data.  This object will
             // later be used as source data argument to the canvas' own `drawImage()` method.
@@ -46,7 +47,7 @@ define(function (require) {
         update: function () {
             // Python --> JavaScript
             // Copy new value from Backbone model, apply to this View.
-            // This method handles updates for everything excluding updates to new image data.
+            // This method handles updates for everything excluding receiving newimage data.
 
             // Update canvas widths and heights.
             if (this.model.get('_canvas_width') !== undefined) {
@@ -76,28 +77,25 @@ define(function (require) {
                 // Load encoded image data into worker image object.
                 this.imageWork.src = 'data:image/' + this.model.get('_format') + ';base64,' + value
 
-                // Event processing continues inside imageWork's onload() event handler,
-                // which in turn calls this.draw().
+                // Event processing and image decoding continues inside imageWork's onload() event
+                // handler, which in turn calls this.draw().
             }
         },
 
-        // update_smoothing: function () {
-        //     // Python --> JavaScript
-        //     console.log('update_smoothing');
-        //     this.set_smoothing(this.model.get('smoothing'));
-        // },
+        update_smoothing: function () {
+            // Python --> JavaScript
+            // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingEnabled
+            var value = this.model.get('smoothing');
 
-        // set_smoothing: function (value) {
-        //     this.context.mozImageSmoothingEnabled = value
-        //     this.context.oImageSmoothingEnabled = value
-        //     this.context.webkitImageSmoothingEnabled = value
-        //     this.context.imageSmoothingEnabled = value
-        // },
+            this.context.mozImageSmoothingEnabled = value
+            this.context.oImageSmoothingEnabled = value
+            this.context.webkitImageSmoothingEnabled = value
+            this.context.imageSmoothingEnabled = value
+        },
 
         clear: function () {
             // Clear the canvas while preserving current geometry state.
             // http://stackoverflow.com/a/6722031/282840
-
             this.context.save();
 
             this.context.setTransform(1, 0, 0, 1, 0, 0);
@@ -180,7 +178,7 @@ define(function (require) {
             if (this._check_mouse_throttle(jev)) {
                 var ev = this._build_mouse_event(jev);
                 this.model.set('_mouse_event', ev);
-                this.touch();
+                this.touch(); // Must call after any modifications to Backbone Model data.
             }
         },
     });

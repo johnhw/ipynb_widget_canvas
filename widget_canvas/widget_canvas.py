@@ -49,7 +49,8 @@ class CanvasImage(widgets.widget.DOMWidget):
     height = traitlets.CInt(help='widget height', sync=True)
 
     # Canvas rendering parameters
-    # _smoothing = traitlets.Bool(True, help='Enable/disable image smoothing', sync=True)
+    # https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingEnabled
+    _smoothing = traitlets.Bool(True, help='Enable/disable image smoothing', sync=True)
 
     # Mouse event information
     _mouse_event = traitlets.Dict(help='Front-end mouse event information', sync=True)
