@@ -3,8 +3,6 @@ define(function (require) {
 
     var CanvasImageView = widget.DOMWidgetView.extend({
         render: function () {
-            // console.log('render D');
-
             // Backbone Model --> JavaScript View
             // Render a widget's view instance to the DOM.
 
@@ -19,7 +17,7 @@ define(function (require) {
             // Dedicated event handler(s) for special cases, e.g. changes to encoded image data.
             // http://backbonejs.org/#Events-on
             this.model.on('change:_encoded', this.update_encoded, this);
-            this.model.on('change:_smoothing', this.update_smoothing, this);
+            // this.model.on('change:_smoothing', this.update_smoothing, this);
 
             // Internal image object serving to render new image src data.  This object will
             // later be used as source data argument to the canvas' own `drawImage()` method.
@@ -116,12 +114,13 @@ define(function (require) {
             // Clear any prior image data.
             this.clear();
 
-            // this.set_smoothing(false);
+            this.update_smoothing();
 
             // Draw image to screen.
             this.context.drawImage(this.imageWork, 0, 0);
         },
 
+        /////////////////////////////////////////
         // JavaScript --> Python
         // Tell Backbone how to respond to JavaScript-generated events.
         // Great reference: https://developer.mozilla.org/en-US/docs/Web/Reference/Events

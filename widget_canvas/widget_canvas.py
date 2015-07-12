@@ -4,6 +4,8 @@ from __future__ import division, print_function, unicode_literals, absolute_impo
 from warnings import filterwarnings
 filterwarnings('ignore', module='IPython.html.widgets')
 
+import numpy as np
+
 import IPython
 from IPython.html import widgets
 from IPython.utils import traitlets
@@ -39,18 +41,19 @@ class CanvasImage(widgets.widget.DOMWidget):
     _encoded = traitlets.Bytes(help='Encoded image data', sync=True)
     _format = traitlets.Unicode(help='Image encoding format', sync=True)
 
-    # Image geometry traitlets.
-    _data_width = traitlets.CInt(help='data width', sync=True)
-    _data_height = traitlets.CInt(help='data height', sync=True)
-    _canvas_width = traitlets.CInt(help='canvas width', sync=True)
-    _canvas_height = traitlets.CInt(help='canvas height', sync=True)
+    # Canvas rendering parameters
+    # https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingEnabled
+    smoothing = traitlets.Bool(True, help='Enable/disable image smoothing', sync=True)
 
+    # HTML/CSS display width and height
     width = traitlets.CInt(help='widget width', sync=True)
     height = traitlets.CInt(help='widget height', sync=True)
 
-    # Canvas rendering parameters
-    # https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingEnabled
-    _smoothing = traitlets.Bool(True, help='Enable/disable image smoothing', sync=True)
+    # Canvas width and height, mapped later to image width and height.
+    _canvas_width = traitlets.CInt(help='canvas width', sync=True)
+    _canvas_height = traitlets.CInt(help='canvas height', sync=True)
+    # _data_width = traitlets.CInt(help='data width', sync=True)   # work in progress...
+    # _data_height = traitlets.CInt(help='data height', sync=True)
 
     # Mouse event information
     _mouse_event = traitlets.Dict(help='Front-end mouse event information', sync=True)
@@ -105,26 +108,25 @@ class CanvasImage(widgets.widget.DOMWidget):
 
     @data.setter
     def data(self, data):
-        if data is None:
-            # Clobber image data
-            self._data = None
-            self._encoded = b''
-            self._data_height, self._data_width = 0, 0
-            self._canvas_height, self._canvas_width = 0, 0
-            self.height, self.width = 0, 0
-        else:
-            # Compress input image data and encode via Base64
-            HxW = data.shape[:2]
-            self._data = data.copy()
-            data_comp = image.compress(self._data, fmt=self.format)
-            data_encoded = image.encode(data_comp)
+        with self.hold_sync():
+            # Hold syncing state changes until the context manager is released
+            if issubclass(type(data), np.ndarray):
+                # Compress input image data and encode via Base64
+                self._data = data.copy()
+                HxW = data.shape[:2]
 
-            with self.hold_sync():
-                # Hold syncing state changes until the context manager is released
-                self._data_height, self._data_width = HxW
-                self._canvas_height, self._canvas_width = HxW
-                self.height, self.width = HxW
-                self._encoded = data_encoded
+                data_comp = image.compress(self._data, fmt=self.format)
+                data_encoded = image.encode(data_comp)
+            else:
+                # Clobber image data
+                self._data = None
+                HxW = 0, 0
+                data_encoded = b''
+
+            # Update traitlets.
+            self._canvas_height, self._canvas_width = HxW
+            self.height, self.width = HxW
+            self._encoded = data_encoded
 
     @property
     def format(self):
@@ -135,15 +137,10 @@ class CanvasImage(widgets.widget.DOMWidget):
 
     @format.setter
     def format(self, value):
+        """Image compression format."""
         if value.lower() not in self._valid_formats:
             raise ValueError('Invalid encoding format: {}'.format(value))
         self._format = value.lower()
-
-    @property
-    def data_width(self):
-        """Data's inherent width"""
-        return
-
 
     def display(self):
         """
