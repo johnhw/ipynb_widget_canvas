@@ -29,3 +29,7 @@ setup(name='widget_canvas',
       cmdclass=cmdclass('widget_canvas'),
       include_package_data=True,
       )
+
+# Nice summary for upload to PyPi
+#  http://peterdowns.com/posts/first-time-with-pypi.html
+
