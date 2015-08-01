@@ -15,21 +15,28 @@ except:
 
 #################################################
 
+version = '0.3.0'
+url = 'https://github.com/Who8MyLunch/ipynb_canvas_widget'
+
+download_url = '{}/tarball/{}'.format(url, version)
+
 setup(name='widget_canvas',
       description='A canvas image widget for the IPython Notebook',
-      version='0.3.0',
+      version=version,
 
       author='Pierre V. Villeneuve',
       author_email='pierre.villeneuve@gmail.com',
       license='MIT',
-      url='https://github.com/Who8MyLunch/ipynb_canvas_widget',
+      url=url,
+      download_url=download_url,
 
-      install_requires=['imageio', 'ipython', 'numpy', 'requests'],
+      keywords=['widget', 'ipython', 'notebook', 'canvas']
+
       packages=['widget_canvas'],
+      install_requires=['imageio', 'ipython', 'numpy', 'requests'],
       cmdclass=cmdclass('widget_canvas'),
       include_package_data=True,
       )
 
 # Nice summary for upload to PyPi
 #  http://peterdowns.com/posts/first-time-with-pypi.html
-
