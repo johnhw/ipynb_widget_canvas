@@ -9,7 +9,10 @@ callback functions.  The following mouse events are handled: motion, button clic
 - Accept image data from Numpy arrays or URLs.
 - Support Python callback functions for front-end mouse events.
 - Support Canvas affine transform operations (work in progress)
+- Widget properties `width` and `height` allow for direct manipulation displayed image size,
+  independent of source data size.
 
+Development was done with Python 3.4 and IPython 3.2.1.
 
 ## Installation
 
@@ -25,69 +28,50 @@ pip install ipynb_widget_canvas
 
 ## Dependencies
 
-- `imageio`
+- `pillow`
 - `requests`
 - `numpy`
 - `ipython`
 
-The [`imageio`](http://imageio.github.io/) package is used to encode image data in the Python back-
-end prior to sending it to the browser front-end.  The `requests` package is used for fetching
-image data from remote URLs.
+The package [`pillow`](https://python-pillow.github.io/) is used to encode image data in the Python
+back-end prior to sending it to the browser front-end.  The `requests` package is used for
+fetching image data from remote URLs.
 
-Development was done with Python 3.4 and IPython 3.2.1.
 
 # Example Widget Usage
 
-```py
-# Setup.
-import IPython
-import imageio  # See imageio package details at pypi.python.org/pypi/imageio
-
-from widget_canvas import CanvasImage
-
-data_image = imageio.imread('images/Whippet.jpg')
-
-print(data_image.dtype)
-print(data_image.shape)
-
-uint8
-(220, 320, 3)
-```
-
-## Display image widget
-
-Widget properties `width` and `height` allow for direct manipulation displayed image size, independent of source data size.
-
-
-```py
-# Instantiate a widget and display it.
-wid_canvas = CanvasImage(data_image)
-
-wid_canvas
-```
 ![image](example.png)
 
 
-
-```py
-# Execute this cell a few time to make the image larger...
-wid_canvas.width *= 1.2
-wid_canvas.height *= 1.2
-```
-
 ## Mouse event handler
 
+A user-defined mouse event handler will receive two items: the widget insance and a `dict`
+containing event information.  The information describes the state of the mouse (x,y position,
+wheel and buttons) and whether certain keys on the keyboard were also depressed (ctrl, alt, shift).
+
+### Example motion event while pressing LMB
 
 ```py
-# Build an event handler function.
-def simple_handler(wid, info):
-    msg = 'Click: {:3d}, {:3d}'.format(info['canvasX'], info['canvasY'])
-    print(msg)
+{'timeStamp': 1439155950492,
+ 'canvasX': 20,
+ 'canvasY': 216,
+ 'type': 'mousemove',
+ 'buttons': 1,
+ 'shiftKey': False,
+ 'ctrlKey': False,
+ 'altKey': False}
 ```
+
+## Example ctrl-click event
 
 ```py
-# Attach the handler to on_click events.
-wid_canvas.on_click(simple_handler)
+# Example
+{'timeStamp': 1439156075139,
+ 'canvasX': 147,
+ 'canvasY': 37,
+ 'type': 'click',
+ 'buttons': 0}
+ 'shiftKey': False,
+ 'ctrlKey': True,
+ 'altKey': False,
 ```
-
-
