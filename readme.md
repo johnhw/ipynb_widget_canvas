@@ -65,7 +65,7 @@ wid_canvas = CanvasImage(data_image)
 
 wid_canvas
 ```
-![image](notebooks/images/Whippet.jpg)
+![image](example.png)
 
 
 
