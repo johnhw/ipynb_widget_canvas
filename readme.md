@@ -66,7 +66,6 @@ wheel and buttons) and whether certain keys on the keyboard were also depressed 
 ## Example ctrl-click event
 
 ```py
-# Example
 {'timeStamp': 1439156075139,
  'canvasX': 147,
  'canvasY': 37,
