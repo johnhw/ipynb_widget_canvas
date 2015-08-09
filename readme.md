@@ -34,8 +34,9 @@ pip install ipynb_widget_canvas
 - `ipython`
 
 The package [`pillow`](https://python-pillow.github.io/) is used to encode image data in the Python
-back-end prior to sending it to the browser front-end.  The `requests` package is used for
-fetching image data from remote URLs.
+back-end prior to sending it to the browser front-end.  The
+[`requests`](http://www.python-requests.org/en/latest/)
+package is used for fetching image data from remote URLs.
 
 
 # Example Widget Usage
