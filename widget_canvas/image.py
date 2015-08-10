@@ -3,14 +3,40 @@ from __future__ import division, print_function, unicode_literals, absolute_impo
 
 import base64
 import urllib
+import io
 
 import numpy as np
-import imageio
+import PIL.Image
 import requests
 
 """
 This module contains a variety of helper functions for working with image data.
 """
+
+
+#################################################
+# File I/O
+def read(fp):
+    """
+    Read image data from file-like object.  Return Numpy array.
+    """
+    img = PIL.Image.open(fp)
+    data = np.asarray(img)
+
+    return data
+
+
+def write(fp, data, fmt=None, **kwargs):
+    """
+    Write image data from Numpy array to file-like object.
+
+    File format is automatically determined from fp if it's a filename, otherwise you
+    must specify format via fmt keyword, e.g. fmt = 'png'.
+
+    Parameter options: http://pillow.readthedocs.org/handbook/image-file-formats.html
+    """
+    img = PIL.Image.fromarray(data)
+    img.save(fp, format=fmt, **kwargs)
 
 
 #################################################
@@ -83,20 +109,21 @@ def setup_data(data):
     If data type is either np.uint8, then it will be converted by scaling
     min(data) -> 0 and max(data) -> 255.
 
-    Returns normalized data.
+    Returns np.uint8 data with shape (num_lines, num_samples, num_bands)
     """
-    # Force data to be Numpy ndarray, if not already.
+    # Force to ndarray.
+    # No copy is performed if the input is already an ndarray
     data = np.asarray(data)
 
     if data.ndim < 2 or 3 < data.ndim:
-        raise ValueError('Image data must have two or three dimensions: {}'.format(data.shape))
+        raise ValueError('Input data must be 2D or 3D: {}'.format(data.shape))
 
     # Force 3D array.
     num_lines, num_samples = data.shape[:2]
     if data.ndim == 2:
         data.shape = num_lines, num_samples, 1
 
-    # Need to change type?
+    # Convert to np.uint8?
     if not (data.dtype == np.uint8):
         scale = data.max() - data.min()
         if scale == 0:
@@ -108,8 +135,10 @@ def setup_data(data):
     return data
 
 
-def compress(data, fmt='jpg', **kwargs):
+def _compress_imageio(data, fmt='jpg', **kwargs):
     """
+    OBSOLETE.
+
     Convert input image data array into a compressed data representation.
 
     Valid data shapes:
@@ -130,11 +159,60 @@ def compress(data, fmt='jpg', **kwargs):
     return data_comp
 
 
+def compress(data, fmt, **kwargs):
+    """
+    Helper function to compress image.
+
+    Valid data shapes:
+        (rows, columns)    - Greyscale
+        (rows, columns, 1) - Greyscale
+        (rows, columns, 3) - RGB
+        (rows, columns, 4) - RGBA
+
+    fmt: 'png', 'jpeg', etc.
+
+    Alpha channel will be ignored if fmt == 'jpeg'.
+
+    Returns a string of compressed data.
+
+    Parameter options: http://pillow.readthedocs.org/handbook/image-file-formats.html
+    """
+    data = setup_data(data)
+
+    fmt = fmt.lower()
+    if fmt == 'jpg':
+        fmt = 'jpeg'
+
+    if fmt == 'jpeg':
+        if data.shape[2] == 4:
+            # Discard alpha channel for JPRG compression.
+            data = data[:, :, :2]
+
+    buff = io.BytesIO()
+    write(buff, data, fmt, **kwargs)
+
+    data_comp = buff.getvalue()
+
+    return data_comp
+
+
+def _decompress_imageio(data_comp):
+    """
+    OBSOLETE.  Decompress image from supplied byte data.
+    """
+    return imageio.imread(data_comp)
+
+
 def decompress(data_comp):
     """
     Decompress image from supplied byte data.
     """
-    return imageio.imread(data_comp)
+    buff = io.BytesIO(data_comp)
+    img = PIL.Image.open(buff)
+
+    data = np.asarray(img)
+
+    return data
 
 
 def encode(data_comp):

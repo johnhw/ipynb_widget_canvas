@@ -58,7 +58,7 @@ class CanvasImage(widgets.widget.DOMWidget):
     # Mouse event information
     _mouse_event = traitlets.Dict(help='Front-end mouse event information', sync=True)
 
-    def __init__(self, data=None, url=None, format='jpeg', quality=90, **kwargs):
+    def __init__(self, data=None, url=None, format='webp', quality=70, **kwargs):
         """
         Instantiate a new Image Widget object.
 

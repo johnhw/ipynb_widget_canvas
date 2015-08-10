@@ -28,10 +28,10 @@ pip install ipynb_widget_canvas
 
 ## Dependencies
 
+- `ipython`
+- `numpy`
 - `pillow`
 - `requests`
-- `numpy`
-- `ipython`
 
 The package [`pillow`](https://python-pillow.github.io/) is used to encode image data in the Python
 back-end prior to sending it to the browser front-end.  The
