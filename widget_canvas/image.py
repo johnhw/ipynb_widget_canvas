@@ -135,28 +135,28 @@ def setup_data(data):
     return data
 
 
-def _compress_imageio(data, fmt='jpg', **kwargs):
-    """
-    OBSOLETE.
+# def _compress_imageio(data, fmt='jpg', **kwargs):
+#     """
+#     OBSOLETE.
 
-    Convert input image data array into a compressed data representation.
+#     Convert input image data array into a compressed data representation.
 
-    Valid data shapes:
-        (rows, columns)    - Greyscale
-        (rows, columns, 1) - Greyscale
-        (rows, columns, 3) - RGB
-        (rows, columns, 4) - RGBA
+#     Valid data shapes:
+#         (rows, columns)    - Greyscale
+#         (rows, columns, 1) - Greyscale
+#         (rows, columns, 3) - RGB
+#         (rows, columns, 4) - RGBA
 
-    fmt: 'png', 'jpeg', etc.
+#     fmt: 'png', 'jpeg', etc.
 
-    Alpha channel will be ignored if fmt == 'jpeg'.
+#     Alpha channel will be ignored if fmt == 'jpeg'.
 
-    Returns a string of compressed data.
-    """
-    # Very easy to compress to a buffer via imageio.
-    data_comp = imageio.imwrite(imageio.RETURN_BYTES, data, format=fmt, **kwargs)
+#     Returns a string of compressed data.
+#     """
+#     # Very easy to compress to a buffer via imageio.
+#     data_comp = imageio.imwrite(imageio.RETURN_BYTES, data, format=fmt, **kwargs)
 
-    return data_comp
+#     return data_comp
 
 
 def compress(data, fmt, **kwargs):
@@ -196,11 +196,11 @@ def compress(data, fmt, **kwargs):
     return data_comp
 
 
-def _decompress_imageio(data_comp):
-    """
-    OBSOLETE.  Decompress image from supplied byte data.
-    """
-    return imageio.imread(data_comp)
+# def _decompress_imageio(data_comp):
+#     """
+#     OBSOLETE.  Decompress image from supplied byte data.
+#     """
+#     return imageio.imread(data_comp)
 
 
 def decompress(data_comp):
@@ -229,7 +229,7 @@ def data_url(data_encode, fmt):
     Assemble into URL data string.
     """
     # The decoding step here is necesary since we need to interpret byte data as text.
-    # See this link for a nice explanation.
+    # See this link for a nice explanation:
     # http://stackoverflow.com/questions/14010551/how-to-convert-between-bytes-and-strings-in-python-3
     encoding = 'utf-8'
     template = 'data:image/{:s};charset={};base64,{:s}'

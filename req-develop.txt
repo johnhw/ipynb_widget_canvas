@@ -1,7 +1,7 @@
 
 # project
 imageio
-ipython==3.2.0
+ipython==3.2.1
 numpy
 requests
 
