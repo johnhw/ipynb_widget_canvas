@@ -185,6 +185,7 @@ define(function (require) {
 
         handle_mouse_generic: function (jev) {
             // Generic mouse event handler.
+            // https://developer.mozilla.org/en-US/docs/Web/Reference/Events
             var ev = this._build_mouse_event(jev);
             this.model.set('_mouse_event', ev);
             this.touch(); // Must call after any modifications to Backbone Model data.

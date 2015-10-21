@@ -317,6 +317,31 @@ def perspective(p, py=None):
     return H
 
 
+def invert(H):
+    """
+    Invert supplied transform matrix and normalize to unit homography scale factor,
+    e.g. H[-1, -1] = 1.0.  Therefore this inverse function is not the same as np.linalg.inv().
+
+    Parameters
+    ----------
+    H : Transform matrix
+
+    Returns
+    -------
+    H_inv : Inverse of matrix H
+    """
+    ok, msg = is_valid(H, reason=True)
+    if not ok:
+        raise ValueError('Invalid transform H: {}.  Reason: {:s}'.format(H, msg))
+
+    H_inv = np.linalg.inv(H)
+
+    # Normalize result to proper homogeneous form.
+    # H_inv /= H_inv[-1, -1]
+
+    return H_inv
+
+
 def concatenate(*matrices):
     """
     Concatenate together a sequence of transformation matrices.  The last entry in the
@@ -499,13 +524,14 @@ class Transform(object):
         Different browser API implementation may swap m12 with m21.  See the Note mentioned in the
         linked description.
         """
+        self._matrix = None
         self.H = H
 
     def __repr__(self):
         """
         Pretty self-representation.
         """
-        template = '{:7.3f} {:7.3f} {:7.3f}\n{:7.3f} {:7.3f} {:7.3f}\n{:7.3f} {:7.3f} {:7.3f}\n'
+        template = '{:6.2f} {:6.2f} {:6.2f}\n{:6.2f} {:6.2f} {:6.2f}\n{:6.2f} {:6.2f} {:6.2f}\n'
 
         result = template.format(self.H[0, 0], self.H[0, 1], self.H[0, 2],
                                  self.H[1, 0], self.H[1, 1], self.H[1, 2],
@@ -518,9 +544,9 @@ class Transform(object):
         """
         template = """
                 \\begin{{equation*}}
-                M = \\begin{{vmatrix}} {:7.3f} & {:7.3f} & {:7.3f} \\\\
-                                       {:7.3f} & {:7.3f} & {:7.3f} \\\\
-                                       {:7.3f} & {:7.3f} & {:7.3f} \\end{{vmatrix}}
+                M = \\begin{{vmatrix}} {:6.2f} & {:6.2f} & {:6.2f} \\\\
+                                       {:6.2f} & {:6.2f} & {:6.2f} \\\\
+                                       {:6.2f} & {:6.2f} & {:6.2f} \\end{{vmatrix}}
                 \\end{{equation*}}
                 """
 
@@ -565,14 +591,18 @@ class Transform(object):
         H /= H[-1, -1]
 
         self._parts = None
-        self._marix = H
+        self._matrix = H
 
     #############################################
 
     def apply(self, H):
         """
         Apply supplied 3x3 matrix transform to self.
+        Input H may be 3x3 numpy array, or a Transform instance.
         """
+        if isinstance(H, Transform):
+            H = H.H
+
         self.H = H.dot(self.H)
 
         return self
@@ -605,9 +635,18 @@ class Transform(object):
         P = shear(z)
         return self.apply(P)
 
+    def invert(self):
+        """
+        Invert self.
+        """
+        self.H = invert(self.H)
+        return self
+
     def warp_points(self, points):
         """
         Apply self to supplied 2D points coordinates.
+
+        Two-dimensional points with shape: (N, 2)
         """
         return warp_points(points, self.H)
 

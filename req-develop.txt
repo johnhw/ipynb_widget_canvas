@@ -1,12 +1,13 @@
 
 # project
-imageio
-ipython==3.2.1
+pillow
+ipython==3.2.2
 numpy
 requests
 
 # helpful packages
 matplotlib
+toyplot
 
 # ipython notebook support
 mistune
