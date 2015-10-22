@@ -12,7 +12,7 @@ callback functions.  The following mouse events are handled: motion, button clic
 - Widget properties `width` and `height` allow for direct manipulation displayed image size,
   independent of source data size.
 
-Development was done with Python 3.4 and IPython 3.2.2.
+Development was done with Python 3.4 and IPython 3.2.2 and Chrome as my browser.
 
 ## Installation
 
@@ -33,24 +33,24 @@ pip install ipynb_widget_canvas
 - `pillow`
 - `requests`
 
-The package [`pillow`](https://python-pillow.github.io/) is used to encode image data in the Python
-back-end prior to sending it to the browser front-end.  The
-[`requests`](http://www.python-requests.org/en/latest/)
-package is used for fetching image data from remote URLs.
-
+The package [`pillow`](https://python-pillow.github.io/) is primarily used to compress and encode
+image data in the Python back-end prior to sending it to the browser front-end.  `pillow` is used
+secondarily to help with basic image file IO functionality. The
+[`requests`](http://www.python-requests.org/en/latest/) package is used for fetching image data
+from remote URLs.
 
 # Example Widget Usage
 
 ![image](example.png)
 
 
-## Mouse event handler
+# Mouse event handling
 
 A user-defined mouse event handler will receive two items: the widget insance and a `dict`
 containing event information.  The information describes the state of the mouse (x,y position,
 wheel and buttons) and whether certain keys on the keyboard were also depressed (ctrl, alt, shift).
 
-### Example motion event while pressing LMB
+## Example motion event while pressing LMB
 
 ```py
 {'timeStamp': 1439155950492,
@@ -75,3 +75,16 @@ wheel and buttons) and whether certain keys on the keyboard were also depressed 
  'ctrlKey': True,
  'altKey': False,
 ```
+
+# Future Work
+
+The HTML5 `Canvas` element has built-in support for imaging zoom, pan, and rotation via a well-
+defined affine transform matrix.  See here for examples and more info:
+[Mozilla](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Transformations).
+The current canvas widget does not expose that functionality to the user, but the necessary
+framework is essentially already in place.  My current projects don't require this sort of thing,
+so I'm placing this on the back burner for the time being.  I don't think it's too difficult to
+connect the JavaScript transform matrix to a Python-equivalent class.  But I know I would get
+distracted by other related cool things along the way (e.g. webGL).
+
+So for now I think this is a good stopping point.

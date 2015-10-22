@@ -17,7 +17,6 @@ define(function (require) {
             // Dedicated event handler(s) for special cases, e.g. changes to encoded image data.
             // http://backbonejs.org/#Events-on
             this.model.on('change:_encoded', this.update_encoded, this);
-            // this.model.on('change:_smoothing', this.update_smoothing, this);
 
             // Internal image object serving to render new image src data.  This object will
             // later be used as source data argument to the canvas' own `drawImage()` method.
@@ -31,7 +30,7 @@ define(function (require) {
             this._mouse_timestamp = 0
             this._mouse_time_threshold = 50 // milliseconds
 
-            // Prevent mouse cursor changing to text selection mode.
+            // Prevent mouse cursor from changing to text selection mode.
             // http://stackoverflow.com/a/11805438/282840
             // when-i-click-on-a-canvas-and-drag-my-mouse-the-cursor-changes-to-a-text-selecti
             this.canvas.onmousedown = function (event) {
@@ -48,30 +47,59 @@ define(function (require) {
                 event.preventDefault();
             };
 
+            // Image rendering option
+            // https://developer.mozilla.org/en/docs/Web/CSS/image-rendering
+            // auto, crisp-edges, pixelated
+            this.canvas.style.imageRendering = 'pixelated'
+            // mozilla browsers might instead need to se '-moz-crisp-edges'??
+
             this.update();
             this.update_encoded();
         },
 
         update: function () {
-            // Python --> JavaScript
+            // Python --> JavaScript (generic)
             // Copy new value from Backbone model, apply to this View.
-            // This method handles updates for everything except image data.
+            // This method handles updates for almost everything except a select few that
+            // dedicated update functions.
+
+            // Currently canvas width and height are slaved to CSS/DOM width and height.
+            // Later this might be upgraded to support canvas' builtin affine transform support.
+
+            // Awesome article about resizing canvas and/or displayed element.
+            // http://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
 
             // Update canvas width and height.
-            if (this.model.get('_canvas_width') !== undefined) {
-                this.canvas.width = this.model.get('_canvas_width')
+            if (this.model.get('width_canvas') !== undefined) {
+                this.canvas.width = this.model.get('width_canvas')
             } else {
                 // https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttribute
                 this.canvas.removeAttribute('width');
             }
 
-            if (this.model.get('_canvas_height') !== undefined) {
-                this.canvas.height = this.model.get('_canvas_height')
+            if (this.model.get('height_canvas') !== undefined) {
+                this.canvas.height = this.model.get('height_canvas')
             } else {
                 // https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttribute
                 this.canvas.removeAttribute('height');
             }
 
+            // Update CSS display width and height.
+            if (this.model.get('width') !== undefined) {
+                this.canvas.style.width = this.model.get('width') + 'px'
+            } else {
+                // https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttribute
+                this.canvas.style.removeAttribute('width');
+            }
+
+            if (this.model.get('height') !== undefined) {
+                this.canvas.style.height = this.model.get('height') + 'px'
+            } else {
+                // https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttribute
+                this.canvas.style.removeAttribute('height');
+            }
+
+            // Draw it!
             this.draw()
 
             return CanvasImageView.__super__.update.apply(this);
@@ -90,17 +118,6 @@ define(function (require) {
             }
         },
 
-        update_smoothing: function () {
-            // Python --> JavaScript
-            // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingEnabled
-            var value = this.model.get('smoothing');
-
-            this.context.mozImageSmoothingEnabled = value
-            this.context.oImageSmoothingEnabled = value
-            // this.context.webkitImageSmoothingEnabled = value
-            this.context.imageSmoothingEnabled = value
-        },
-
         clear: function () {
             // Clear the canvas while preserving current geometry state.
             // http://stackoverflow.com/a/6722031/282840
@@ -116,12 +133,10 @@ define(function (require) {
             // Draw image data from internal Image object to the Canvas element.
             // http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
 
-            // Clear any prior image data.
+            // Clear any prior image data
             this.clear();
 
-            this.update_smoothing();
-
-            // Draw image to screen.
+            // Draw image to screen
             this.context.drawImage(this.imageWork, 0, 0);
         },
 
@@ -144,9 +159,13 @@ define(function (require) {
         _build_mouse_event: function (jev) {
             // Build event data structure to be passed along to Python backend.
 
-            // Canvas-local XY coordinates.
+            // Mouse button events
+            // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
+            //
+            // Canvas-local XY coordinates:
             // http://stackoverflow.com/questions/17130395/canvas-html5-real-mouse-position
             // https://developer.mozilla.org/en-US/docs/Web/API/Element.getBoundingClientRect
+
             var rect = this.canvas.getBoundingClientRect();
 
             var ev = {
@@ -157,10 +176,10 @@ define(function (require) {
                 altKey: jev.originalEvent.altKey,
                 ctrlKey: jev.originalEvent.ctrlKey,
                 timeStamp: jev.originalEvent.timeStamp,
-                buttons: jev.originalEvent.buttons, // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
+                buttons: jev.originalEvent.buttons,
             }
 
-            // Check for `wheel` event.
+            // Check for `wheel` event
             // https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel
             if (jev.originalEvent.type == 'wheel') {
                 ev.deltaMode = jev.originalEvent.deltaMode
@@ -173,7 +192,7 @@ define(function (require) {
         },
 
         _check_mouse_throttle: function (jev) {
-            // Return true if enough time has passed.
+            // Return true if enough time has passe
             var delta = jev.originalEvent.timeStamp - this._mouse_timestamp
             if (delta >= this._mouse_time_threshold) {
                 this._mouse_timestamp = jev.originalEvent.timeStamp
@@ -184,7 +203,7 @@ define(function (require) {
         },
 
         handle_mouse_generic: function (jev) {
-            // Generic mouse event handler.
+            // Generic mouse event handler
             // https://developer.mozilla.org/en-US/docs/Web/Reference/Events
             var ev = this._build_mouse_event(jev);
             this.model.set('_mouse_event', ev);
@@ -192,7 +211,7 @@ define(function (require) {
         },
 
         handle_mouse_move: function (jev) {
-            // Mouse motion event handler.
+            // Mouse motion event handler
             // This event appears to generate a lot of CPU usage.  Throttling is my attempt to
             // mitigate the issue.
             if (this._check_mouse_throttle(jev)) {
