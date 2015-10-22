@@ -12,7 +12,7 @@ callback functions.  The following mouse events are handled: motion, button clic
 - Widget properties `width` and `height` allow for direct manipulation displayed image size,
   independent of source data size.
 
-Development was done with Python 3.4 and IPython 3.2.2 and Chrome as my browser.
+Development was done with Python 3.4 and IPython 3.2.2 while using Chrome as my browser.
 
 ## Installation
 
