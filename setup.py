@@ -30,13 +30,13 @@ setup(name='widget_canvas',
       url=url,
       download_url=download_url,
 
-      keywords=['widget', 'ipython', 'notebook', 'canvas', 'image'],
+      keywords=['widget', 'ipython', 'notebook', 'canvas', 'html5'],
 
       packages=['widget_canvas'],
-      install_requires=['imageio', 'ipython', 'numpy', 'requests'],
+      install_requires=['pillow', 'ipython', 'numpy', 'requests'],
       cmdclass=cmdclass('widget_canvas'),
       include_package_data=True,
       )
 
-# Nice summary for upload to PyPi
+# Nice summary for uploading to PyPi
 # http://peterdowns.com/posts/first-time-with-pypi.html
