@@ -14,7 +14,7 @@ define(function (require) {
             this.canvas = this.el
             this.context = this.canvas.getContext('2d');
 
-            // Dedicated event handler(s) for special cases, e.g. changes to encoded image data.
+            // Dedicated event handler(s) for special cases, e.g. changes to encoded image data
             // http://backbonejs.org/#Events-on
             this.model.on('change:_encoded', this.update_encoded, this);
 
@@ -26,7 +26,7 @@ define(function (require) {
                 that.draw()
             }
 
-            // Mouse event throttle.
+            // Mouse event throttle
             this._mouse_timestamp = 0
             this._mouse_time_threshold = 50 // milliseconds
 
@@ -37,21 +37,21 @@ define(function (require) {
                 event.preventDefault();
             };
 
-            // Prevent page from scrolling with mouse wheel events over canvas.
+            // Prevent page from scrolling with mouse wheel events over canvas
             this.canvas.onwheel = function (event) {
                 event.preventDefault();
             };
 
-            // Prevent right-click context menu.
+            // Prevent context menu popup from right-click on canvas
             this.canvas.oncontextmenu = function (event) {
                 event.preventDefault();
             };
 
-            // Image rendering option
+            // Image rendering quality
             // https://developer.mozilla.org/en/docs/Web/CSS/image-rendering
             // auto, crisp-edges, pixelated
             this.canvas.style.imageRendering = 'pixelated'
-            // mozilla browsers might instead need to se '-moz-crisp-edges'??
+            // mozilla browsers might instead need to set '-moz-crisp-edges'??
 
             this.update();
             this.update_encoded();
@@ -60,13 +60,14 @@ define(function (require) {
         update: function () {
             // Python --> JavaScript (generic)
             // Copy new value from Backbone model, apply to this View.
-            // This method handles updates for almost everything except a select few that
-            // dedicated update functions.
+            // This method handles updates for almost everything except a select few traitlets that
+            // have dedicated update functions.
 
-            // Currently canvas width and height are slaved to CSS/DOM width and height.
-            // Later this might be upgraded to support canvas' builtin affine transform support.
+            // Currently canvas width and height are slaved (on the Pythn side) to image's
+            // inherent width and height.  Later this might be upgraded to support canvas' builtin
+            // affine transform support.
 
-            // Awesome article about resizing canvas and/or displayed element.
+            // Awesome article about resizing canvas and/or displayed element
             // http://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
 
             // Update canvas width and height.
@@ -84,7 +85,7 @@ define(function (require) {
                 this.canvas.removeAttribute('height');
             }
 
-            // Update CSS display width and height.
+            // Update CSS display width and height
             if (this.model.get('width') !== undefined) {
                 this.canvas.style.width = this.model.get('width') + 'px'
             } else {
@@ -114,12 +115,12 @@ define(function (require) {
                 this.imageWork.src = 'data:image/' + this.model.get('_format') + ';base64,' + value
 
                 // Event processing and image decoding continues inside imageWork's onload() event
-                // handler, which in turn calls this.draw().
+                // handler, which in turn calls this.draw(), which is defined just below..
             }
         },
 
         clear: function () {
-            // Clear the canvas while preserving current geometry state.
+            // Clear the canvas while preserving current geometry state
             // http://stackoverflow.com/a/6722031/282840
             this.context.save();
 
@@ -130,11 +131,14 @@ define(function (require) {
         },
 
         draw: function () {
-            // Draw image data from internal Image object to the Canvas element.
+            // Draw image data from internal Image object to the Canvas element
             // http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
 
             // Clear any prior image data
             this.clear();
+
+            // Update current transform information
+            // -= NOT YET IMPLEMENTED =-
 
             // Draw image to screen
             this.context.drawImage(this.imageWork, 0, 0);
@@ -142,7 +146,7 @@ define(function (require) {
 
         /////////////////////////////////////////
         // JavaScript --> Python
-        // Tell Backbone how to respond to JavaScript-generated events.
+        // Tell Backbone how to respond to JavaScript-generated events
         // Great reference: https://developer.mozilla.org/en-US/docs/Web/Reference/Events
         events: {
             mousemove: 'handle_mouse_move',
@@ -150,14 +154,14 @@ define(function (require) {
             mousedown: 'handle_mouse_generic',
             wheel: 'handle_mouse_generic',
             click: 'handle_mouse_generic',
-            // mouseenter: 'XXX',  // don't worry about these events for now.
+            // mouseenter: 'XXX',  // don't worry about these events for now
             // mouseleave: 'XXX',
             // mouseout:   'XXX',
             // mouseover:  'XXX',
         },
 
         _build_mouse_event: function (jev) {
-            // Build event data structure to be passed along to Python backend.
+            // Build event data structure to be passed along to Python backend
 
             // Mouse button events
             // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
@@ -165,11 +169,21 @@ define(function (require) {
             // Canvas-local XY coordinates:
             // http://stackoverflow.com/questions/17130395/canvas-html5-real-mouse-position
             // https://developer.mozilla.org/en-US/docs/Web/API/Element.getBoundingClientRect
-
             var rect = this.canvas.getBoundingClientRect();
 
+            // Convert event types to more practical values for use downstream with user's Python
+            // callback functions.
+            var js_to_py = {
+                'mousemove': 'move',
+                'mouseup': 'up',
+                'mousedown': 'down',
+                'click': 'click',
+                'wheel': 'wheel',
+            }
+
+            // Build the event
             var ev = {
-                type: jev.originalEvent.type,
+                type: js_to_py[jev.originalEvent.type],
                 canvasX: parseInt(jev.originalEvent.clientX - rect.left),
                 canvasY: parseInt(jev.originalEvent.clientY - rect.top),
                 shiftKey: jev.originalEvent.shiftKey,
@@ -192,7 +206,7 @@ define(function (require) {
         },
 
         _check_mouse_throttle: function (jev) {
-            // Return true if enough time has passe
+            // Return true if enough time has passed
             var delta = jev.originalEvent.timeStamp - this._mouse_timestamp
             if (delta >= this._mouse_time_threshold) {
                 this._mouse_timestamp = jev.originalEvent.timeStamp
