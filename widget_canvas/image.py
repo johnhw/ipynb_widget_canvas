@@ -35,7 +35,8 @@ def write(fp, data, fmt=None, **kwargs):
 
     Parameter options: http://pillow.readthedocs.org/handbook/image-file-formats.html
     """
-    img = PIL.Image.fromarray(data)
+    m = determine_mode(data)
+    img = PIL.Image.fromarray(data.squeeze(), mode=m)
     img.save(fp, format=fmt, **kwargs)
 
 
@@ -96,7 +97,7 @@ def determine_mode(data):
     return mode
 
 
-def setup_data(data):
+def setup_data(data, force_copy=True):
     """
     Prepare input image data for compression.
 
@@ -111,9 +112,11 @@ def setup_data(data):
 
     Returns np.uint8 data with shape (num_lines, num_samples, num_bands)
     """
-    # Force to ndarray.
-    # No copy is performed if the input is already an ndarray
+    data_orig = data
     data = np.asarray(data)
+
+    if force_copy and data is data_orig:
+        data = data.copy()
 
     if data.ndim < 2 or 3 < data.ndim:
         raise ValueError('Input data must be 2D or 3D: {}'.format(data.shape))

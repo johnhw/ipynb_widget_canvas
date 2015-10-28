@@ -102,7 +102,7 @@ class CanvasImage(widgets.widget.DOMWidget):
             # Hold syncing state changes until the context manager is released
             if issubclass(type(data), np.ndarray):
                 # Compress input image data and encode via Base64
-                self._data = data.copy()  # to copy or not to copy, that's a good question!
+                self._data = image.setup_data(data)
                 HxW = data.shape[:2]
 
                 data_comp = image.compress(self._data, fmt=self.format)

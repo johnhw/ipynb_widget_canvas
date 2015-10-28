@@ -15,7 +15,7 @@ except:
 
 #################################################
 
-version = '0.3.0'
+version = '0.3.3'
 url = 'https://github.com/Who8MyLunch/ipynb_canvas_widget'
 
 download_url = '{}/tarball/{}'.format(url, version)
