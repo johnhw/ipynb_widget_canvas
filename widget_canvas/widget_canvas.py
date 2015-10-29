@@ -101,23 +101,34 @@ class CanvasImage(widgets.widget.DOMWidget):
         with self.hold_sync():
             # Hold syncing state changes until the context manager is released
             if issubclass(type(data), np.ndarray):
-                # Compress input image data and encode via Base64
-                self._data = image.setup_data(data)
+                self.update_data(data)
                 HxW = data.shape[:2]
 
-                data_comp = image.compress(self._data, fmt=self.format)
-                data_encoded = image.encode(data_comp)
+                # # Compress input image data and encode via Base64
+                # self._data = image.setup_data(data)
+                # data_comp = image.compress(self._data, fmt=self.format)
+                # data_encoded = image.encode(data_comp)
             else:
                 # Clobber image data
                 self._data = None
                 HxW = 0, 0
                 # data_comp = None
-                data_encoded = b''
+                self._encoded = b''
 
             # Update traitlets
             self.height, self.width = HxW
             self.height_canvas, self.width_canvas = HxW
-            self._encoded = data_encoded
+
+    def update_data(self, data):
+        """
+        Update data only, leave widths, height, etc. unchanged.
+        """
+        # Compress input image data and encode via Base64
+        self._data = image.setup_data(data)
+
+        data_comp = image.compress(self._data, fmt=self.format)
+        data_encoded = image.encode(data_comp)
+        self._encoded = data_encoded
 
     @property
     def format(self):
