@@ -1,5 +1,7 @@
-define(function (require) {
-    var widget = require('widgets/js/widget');
+require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
+
+// define(function (require) {
+//     var widget = require('widgets/js/widget');
 
     var CanvasImageView = widget.DOMWidgetView.extend({
         render: function () {
@@ -47,12 +49,6 @@ define(function (require) {
                 event.preventDefault();
             };
 
-            // Image rendering quality
-            // https://developer.mozilla.org/en/docs/Web/CSS/image-rendering
-            // auto, crisp-edges, pixelated
-            this.canvas.style.imageRendering = 'pixelated'
-            // mozilla browsers might instead need to set '-moz-crisp-edges'??
-
             this.update();
             this.update_encoded();
         },
@@ -99,6 +95,16 @@ define(function (require) {
                 // https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttribute
                 this.canvas.style.removeAttribute('height');
             }
+
+            // Image rendering quality
+            // https://developer.mozilla.org/en/docs/Web/CSS/image-rendering
+            // auto, crisp-edges, pixelated
+            if (this.model.get('pixilated')) {
+                this.canvas.style.imageRendering = 'pixelated'
+            } else {
+                this.canvas.style.imageRendering = 'auto'
+            }
+
 
             // Draw it!
             this.draw()
@@ -219,25 +225,33 @@ define(function (require) {
         handle_mouse_generic: function (jev) {
             // Generic mouse event handler
             // https://developer.mozilla.org/en-US/docs/Web/Reference/Events
-            var ev = this._build_mouse_event(jev);
-            this.model.set('_mouse_event', ev);
-            this.touch(); // Must call after any modifications to Backbone Model data.
-        },
 
-        handle_mouse_move: function (jev) {
-            // Mouse motion event handler
-            // This event appears to generate a lot of CPU usage.  Throttling is my attempt to
-            // mitigate the issue.
-            if (this._check_mouse_throttle(jev)) {
+            if (this.model.get('_mouse_active')) {
                 var ev = this._build_mouse_event(jev);
                 this.model.set('_mouse_event', ev);
                 this.touch(); // Must call after any modifications to Backbone Model data.
             }
         },
+
+        handle_mouse_move: function (jev) {
+            // Mouse motion event handler
+            if (this.model.get('_mouse_active')) {
+                if (this._check_mouse_throttle(jev)) {
+                    // This event appears to generate a lot of CPU usage.  Throttling is my
+                    // attempt to mitigate the issue.
+                    var ev = this._build_mouse_event(jev);
+                    this.model.set('_mouse_event', ev);
+                    this.touch(); // Must call after any modifications to Backbone Model data.
+                }
+            }
+        },
     });
 
-    // All done.
-    return {
-        CanvasImageView: CanvasImageView,
-    };
+    // Simple way to load JS stuff.
+    manager.WidgetManager.register_widget_view('CanvasImageView', CanvasImageView);
+
+    // // Official way to load/register JS stuff.
+    // return {
+    //     CanvasImageView: CanvasImageView,
+    // };
 });

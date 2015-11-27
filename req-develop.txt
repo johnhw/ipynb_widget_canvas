@@ -1,20 +1,7 @@
 
-# project
 pillow
-ipython==3.2.2
 numpy
 requests
-
-# helpful packages
+jupyter
 matplotlib
 toyplot
-
-# ipython notebook support
-mistune
-pyreadline
-pyzmq
-pygments
-jinja2
-tornado
-terminado
-jsonschema

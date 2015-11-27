@@ -1,18 +1,30 @@
 
 from __future__ import division, print_function, unicode_literals, absolute_import
 
-from warnings import filterwarnings
-filterwarnings('ignore', module='IPython.html.widgets')
-
+import os
 import numpy as np
 
 import IPython
-from IPython.html import widgets
-from IPython.utils import traitlets
+from ipywidgets import widgets
+import traitlets
 
 from . import image
 
-#################################################
+
+def inject():
+    """
+    Inject JavaScript component into browser front end.
+    """
+    fname = 'widget_canvas.js'
+    path_module = os.path.abspath(os.path.dirname(__file__))
+
+    f = os.path.join(path_module, fname)
+    js = IPython.display.Javascript(filename=f)  # data=None, url=None, filename=None, lib=None
+
+    IPython.display.display(js)
+
+# Inject JavaScript when module is first loaded.
+inject()
 
 
 class CanvasImage(widgets.widget.DOMWidget):
@@ -25,9 +37,6 @@ class CanvasImage(widgets.widget.DOMWidget):
     # _view_module:  A requirejs module in which to find _view_name.
 
     _view_name = traitlets.Unicode('CanvasImageView', sync=True)
-    _view_module = traitlets.Unicode('nbextensions/widget_canvas/widget_canvas', sync=True)
-    # _model_name = traitlets.Unicode('CanvasImageModel', sync=True)
-    # _model_module = traitlets.Unicode('nbextensions/widget_canvas/widget_canvas', sync=True)
 
     # Encoded image data and metadata
     _encoded = traitlets.Bytes(help='Encoded image data', sync=True)
@@ -37,6 +46,9 @@ class CanvasImage(widgets.widget.DOMWidget):
     height = traitlets.CInt(help='image screen display height', sync=True)
     width = traitlets.CInt(help='image screen display width', sync=True)
 
+    # Image rendering quality. https://developer.mozilla.org/en/docs/Web/CSS/image-rendering
+    pixilated = traitlets.Bool(False, help='Render images via nearest neighbor sampling', sync=True)
+
     # Canvas width and height, slaved to image data width and height.
     width_canvas = traitlets.CInt(help='image data width', sync=True)
     height_canvas = traitlets.CInt(help='image data height', sync=True)
@@ -45,7 +57,8 @@ class CanvasImage(widgets.widget.DOMWidget):
     _mouse_active = traitlets.Bool(False, help='Indicate if mouse events are active', sync=True)
     _mouse_event = traitlets.Dict(help='Front-end mouse event information', sync=True)
 
-    def __init__(self, data=None, url=None, format='webp', quality=70, **kwargs):
+    def __init__(self, data=None, url=None, format='webp', quality=70, force_inject=False,
+                 **kwargs):
         """
         Instantiate a new Canvas Image Widget object.
 
@@ -64,6 +77,9 @@ class CanvasImage(widgets.widget.DOMWidget):
         locally as a uint8 byte array.
         """
         super(CanvasImage, self).__init__(**kwargs)
+
+        if force_inject:
+            inject()
 
         # Internal Python handler for JS mouse events synced through _mouse_event traitlet
         # https://developer.mozilla.org/en-US/docs/Web/Reference/Events
@@ -185,7 +201,7 @@ class CanvasImage(widgets.widget.DOMWidget):
             kind = event['type']
             self._mouse_event_dispatchers[kind](self, event)
         except KeyError:
-            raise ValueError('Really unexpected mouse event type: {}'.format(kind))
+            raise ValueError('Really unexpected event type: {}'.format(kind))
 
     #######################################################
     # Register Python fnctions as mouse event handlers
@@ -207,6 +223,11 @@ class CanvasImage(widgets.widget.DOMWidget):
         Set keyword remove=True in order to unregister an existing callback function.
         Arguments to the supplied callback function are the widget instance and event information.
         """
+
+        # Enable mouse event handling at front end.  Still need a way to turn off mouse event
+        # handling when/if all event handler functions are disabled.
+        self._mouse_active = True
+
         # Default to all defined event dispatchers
         if not kinds:
             # Default all mouse event kinds: 'move', 'up', 'down', 'click', 'wheel'
@@ -236,6 +257,7 @@ class CanvasImage(widgets.widget.DOMWidget):
 
     def on_mouse_wheel(self, callback, remove=False):
         self.on_mouse(callback, 'wheel', remove=remove)
+
 
 #################################################
 

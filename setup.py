@@ -2,20 +2,10 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
 
-# jupyter-pip
-# Allows IPython notebook extension writers to make their extension pip installable!
-# https://github.com/jdfreder/jupyter-pip
-try:
-    from jupyterpip import cmdclass
-except:
-    import pip
-    import importlib
-    pip.main(['install', 'jupyter-pip'])
-    cmdclass = importlib.import_module('jupyterpip').cmdclass
+# Nice summary for uploading to PyPi
+# http://peterdowns.com/posts/first-time-with-pypi.html
 
-#################################################
-
-version = '0.3.4'
+version = '0.3.5'
 url = 'https://github.com/Who8MyLunch/ipynb_canvas_widget'
 
 download_url = '{}/tarball/{}'.format(url, version)
@@ -30,13 +20,9 @@ setup(name='widget_canvas',
       url=url,
       download_url=download_url,
 
-      keywords=['widget', 'ipython', 'notebook', 'canvas', 'html5'],
+      keywords=['widget', 'jupyter', 'notebook', 'canvas', 'html5'],
 
       packages=['widget_canvas'],
-      install_requires=['pillow', 'ipython', 'numpy', 'requests'],
-      cmdclass=cmdclass('widget_canvas'),
-      include_package_data=True,
+      install_requires=['pillow', 'jupyter', 'numpy', 'requests'],
+      package_data={'': ['*.txt', '*.js']},
       )
-
-# Nice summary for uploading to PyPi
-# http://peterdowns.com/posts/first-time-with-pypi.html
