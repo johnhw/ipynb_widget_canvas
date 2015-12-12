@@ -99,12 +99,11 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
             // Image rendering quality
             // https://developer.mozilla.org/en/docs/Web/CSS/image-rendering
             // auto, crisp-edges, pixelated
-            if (this.model.get('pixilated')) {
+            if (this.model.get('pixelated')) {
                 this.canvas.style.imageRendering = 'pixelated'
             } else {
                 this.canvas.style.imageRendering = 'auto'
             }
-
 
             // Draw it!
             this.draw()
@@ -125,8 +124,17 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
             }
         },
 
+        remove: function () {
+            // Widget is about to be removed from the front end display.
+            // console.log('remove!');
+            // This is a potential place where I could add functionality to replace canvas with a
+            // static image. See matplotlib's nbagg for ideas:
+            // https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/backends/web_backend/nbagg_mpl.js
+            CanvasImageView.__super__.remove.apply(this, arguments);
+        },
+
         clear: function () {
-            // Clear the canvas while preserving current geometry state
+            // Clear the canvas while preserving current geometry state.
             // http://stackoverflow.com/a/6722031/282840
             this.context.save();
 
@@ -137,13 +145,13 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
         },
 
         draw: function () {
-            // Draw image data from internal Image object to the Canvas element
+            // Draw image data from internal Image object to the Canvas element.
             // http://www.w3.org/TR/2014/CR-2dcontext-20140821/#drawing-images-to-the-canvas
 
-            // Clear any prior image data
+            // Clear any prior image data.
             this.clear();
 
-            // Update current transform information
+            // Update current transform information.
             // -= NOT YET IMPLEMENTED =-
 
             // Draw image to screen

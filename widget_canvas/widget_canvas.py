@@ -47,17 +47,18 @@ class CanvasImage(widgets.widget.DOMWidget):
     width = traitlets.CInt(help='image screen display width', sync=True)
 
     # Image rendering quality. https://developer.mozilla.org/en/docs/Web/CSS/image-rendering
-    pixilated = traitlets.Bool(False, help='Render images via nearest neighbor sampling', sync=True)
+    pixelated = traitlets.Bool(False, help='Render images via nearest neighbor sampling',
+                               sync=True)
 
     # Canvas width and height, slaved to image data width and height.
     width_canvas = traitlets.CInt(help='image data width', sync=True)
     height_canvas = traitlets.CInt(help='image data height', sync=True)
 
-    # Mouse event information
+    # Mouse event information.
     _mouse_active = traitlets.Bool(False, help='Indicate if mouse events are active', sync=True)
     _mouse_event = traitlets.Dict(help='Front-end mouse event information', sync=True)
 
-    def __init__(self, data=None, url=None, format='webp', quality=70, force_inject=False,
+    def __init__(self, data=None, url=None, format='webp', quality=70, force_js=False,
                  **kwargs):
         """
         Instantiate a new Canvas Image Widget object.
@@ -78,7 +79,7 @@ class CanvasImage(widgets.widget.DOMWidget):
         """
         super(CanvasImage, self).__init__(**kwargs)
 
-        if force_inject:
+        if force_js:
             inject()
 
         # Internal Python handler for JS mouse events synced through _mouse_event traitlet
@@ -88,9 +89,8 @@ class CanvasImage(widgets.widget.DOMWidget):
 
         # Allow user to attach Python callback functions to operate in response to mouse events.
         self._mouse_event_dispatchers = {}  # Python (this module) --> user's Python function(s)
-        event_kinds = ['move', 'up', 'down', 'click', 'wheel']
-        for kind in event_kinds:
-            # independent dispatcher for each 'kind' of event.
+        for kind in ['move', 'up', 'down', 'click', 'wheel']:
+            # Independent dispatcher for each 'kind' of event.
             self._mouse_event_dispatchers[kind] = widgets.widget.CallbackDispatcher()
 
         # Store init data in traitlet(s)
@@ -105,6 +105,10 @@ class CanvasImage(widgets.widget.DOMWidget):
         # Set image data
         self.data = data
 
+    def close(self):
+        print('close!!')
+        super().close()
+
     @property
     def data(self):
         """
@@ -115,36 +119,36 @@ class CanvasImage(widgets.widget.DOMWidget):
     @data.setter
     def data(self, data):
         with self.hold_sync():
-            # Hold syncing state changes until the context manager is released
+            # Pause syncing of state changes until the context manager is released
             if issubclass(type(data), np.ndarray):
-                self.update_data(data)
                 HxW = data.shape[:2]
 
-                # # Compress input image data and encode via Base64
-                # self._data = image.setup_data(data)
-                # data_comp = image.compress(self._data, fmt=self.format)
-                # data_encoded = image.encode(data_comp)
+                # Compress input image data and encode via Base64
+                self._data = image.setup_data(data)
+
+                data_comp = image.compress(self._data, fmt=self.format)
+                data_encoded = image.encode(data_comp)
             else:
                 # Clobber image data
                 self._data = None
                 HxW = 0, 0
                 # data_comp = None
-                self._encoded = b''
+                data_encoded = b''
 
             # Update traitlets
+            self._encoded = data_encoded
             self.height, self.width = HxW
             self.height_canvas, self.width_canvas = HxW
 
-    def update_data(self, data):
-        """
-        Update data only, leave widths, height, etc. unchanged.
-        """
-        # Compress input image data and encode via Base64
-        self._data = image.setup_data(data)
-
-        data_comp = image.compress(self._data, fmt=self.format)
-        data_encoded = image.encode(data_comp)
-        self._encoded = data_encoded
+    # def update_data(self, data):
+    #     """
+    #     Update data only, leave widths, height, etc. unchanged.
+    #     """
+    #     # Compress input image data and encode via Base64
+    #     self._data = image.setup_data(data)
+    #     data_comp = image.compress(self._data, fmt=self.format)
+    #     data_encoded = image.encode(data_comp)
+    #     self._encoded = data_encoded
 
     @property
     def format(self):
@@ -168,7 +172,7 @@ class CanvasImage(widgets.widget.DOMWidget):
         IPython.display.display(self)
 
     #####################################################
-    # Respond to mouse events by calling registered Python function event handlers
+    # Respond to mouse events by calling registered Python event handlers
     def _scale_xy_screen_to_data(self, event):
         """
         Event XY values are generated in screen coordinates.  This function convert the values
@@ -211,9 +215,16 @@ class CanvasImage(widgets.widget.DOMWidget):
     #
     #   https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
     #   https://developer.mozilla.org/en-US/docs/Web/Events/wheel
+    def _num_handlers(self):
+        """
+        Number of registered mouse event handlers.
+        """
+        numbers = [len(d.callbacks) for d in self._mouse_event_dispatchers.values()]
+        return sum(numbers)
+
     def on_mouse(self, callback, kinds=None, remove=False):
         """
-        Register a callback function for one or more mouse kinds of events.
+        Register a callback function for one or more kinds of mouxe events.
         Valid mouse event kinds: 'move', 'up', 'down', 'click', 'wheel'
 
         Default kinds=None will register the callback with all mouse event types.
@@ -223,11 +234,6 @@ class CanvasImage(widgets.widget.DOMWidget):
         Set keyword remove=True in order to unregister an existing callback function.
         Arguments to the supplied callback function are the widget instance and event information.
         """
-
-        # Enable mouse event handling at front end.  Still need a way to turn off mouse event
-        # handling when/if all event handler functions are disabled.
-        self._mouse_active = True
-
         # Default to all defined event dispatchers
         if not kinds:
             # Default all mouse event kinds: 'move', 'up', 'down', 'click', 'wheel'
@@ -243,21 +249,34 @@ class CanvasImage(widgets.widget.DOMWidget):
             # Register/un-register user-defined callback function
             self._mouse_event_dispatchers[k].register_callback(callback, remove=remove)
 
-    def on_mouse_move(self, callback, remove=False):
-        self.on_mouse(callback, 'move', remove=remove)
+        # Enable/disable mouse event handling at front end.
+        self._mouse_active =  self._num_handlers() > 0
 
-    def on_mouse_up(self, callback, remove=False):
-        self.on_mouse(callback, 'up', remove=remove)
+    def on_mouse_move(self, callback):
+        self.on_mouse(callback, 'move')
 
-    def on_mouse_down(self, callback, remove=False):
-        self.on_mouse(callback, 'down', remove=remove)
+    def on_mouse_up(self, callback):
+        self.on_mouse(callback, 'up')
 
-    def on_mouse_click(self, callback, remove=False):
-        self.on_mouse(callback, 'click', remove=remove)
+    def on_mouse_down(self, callback):
+        self.on_mouse(callback, 'down')
 
-    def on_mouse_wheel(self, callback, remove=False):
-        self.on_mouse(callback, 'wheel', remove=remove)
+    def on_mouse_click(self, callback,):
+        self.on_mouse(callback, 'click')
 
+    def on_mouse_wheel(self, callback):
+        self.on_mouse(callback, 'wheel')
+
+    def unregister(self):
+        """
+        Unregister all mouse event handler functions.
+        """
+        callbacks = []
+        for dispatcher in self._mouse_event_dispatchers.values():
+            callbacks += dispatcher.callbacks
+
+        for cb in callbacks:
+            self.on_mouse(cb, remove=True)
 
 #################################################
 
