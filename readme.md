@@ -39,6 +39,12 @@ secondarily to help with basic image file IO functionality. The
 [`requests`](http://www.python-requests.org/en/latest/) package is used for fetching image data
 from remote URLs.
 
+# Test it on Binder
+
+
+[![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/Who8MyLunch/ipynb_widget_canvas)
+
+
 # Example Widget Usage
 
 ![image](example.png)
