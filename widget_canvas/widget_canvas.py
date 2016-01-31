@@ -2,6 +2,9 @@
 from __future__ import division, print_function, unicode_literals, absolute_import
 
 import os
+import base64
+import uuid
+
 import numpy as np
 
 import IPython
@@ -57,6 +60,9 @@ class CanvasImage(widgets.widget.DOMWidget):
     # Mouse event information.
     _mouse_active = traitlets.Bool(False, help='Indicate if mouse events are active', sync=True)
     _mouse_event = traitlets.Dict(help='Front-end mouse event information', sync=True)
+
+    _uuid = traitlets.Unicode(uuid.uuid1().hex, help='widget unique ID string', sync=True)
+    _something = traitlets.Bool(True, sync=True)
 
     def __init__(self, data=None, url=None, format='webp', quality=70, force_js=False,
                  **kwargs):
@@ -126,29 +132,19 @@ class CanvasImage(widgets.widget.DOMWidget):
                 # Compress input image data and encode via Base64
                 self._data = image.setup_data(data)
 
-                data_comp = image.compress(self._data, fmt=self.format)
-                data_encoded = image.encode(data_comp)
+                data_comp = image.encode(self._data, fmt=self.format)
+                data_encode = base64.b64encode(data_comp)
             else:
                 # Clobber image data
                 self._data = None
                 HxW = 0, 0
                 # data_comp = None
-                data_encoded = b''
+                data_encode = b''
 
             # Update traitlets
-            self._encoded = data_encoded
+            self._encoded = data_encode
             self.height, self.width = HxW
             self.height_canvas, self.width_canvas = HxW
-
-    # def update_data(self, data):
-    #     """
-    #     Update data only, leave widths, height, etc. unchanged.
-    #     """
-    #     # Compress input image data and encode via Base64
-    #     self._data = image.setup_data(data)
-    #     data_comp = image.compress(self._data, fmt=self.format)
-    #     data_encoded = image.encode(data_comp)
-    #     self._encoded = data_encoded
 
     @property
     def format(self):
@@ -224,7 +220,7 @@ class CanvasImage(widgets.widget.DOMWidget):
 
     def on_mouse(self, callback, kinds=None, remove=False):
         """
-        Register a callback function for one or more kinds of mouxe events.
+        Register a callback function for one or more kinds of mouse events.
         Valid mouse event kinds: 'move', 'up', 'down', 'click', 'wheel'
 
         Default kinds=None will register the callback with all mouse event types.
@@ -277,6 +273,9 @@ class CanvasImage(widgets.widget.DOMWidget):
 
         for cb in callbacks:
             self.on_mouse(cb, remove=True)
+
+        # Enable/disable mouse event handling at front end.
+        self._mouse_active =  self._num_handlers() > 0
 
 #################################################
 

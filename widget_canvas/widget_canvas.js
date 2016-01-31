@@ -9,8 +9,12 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
             // Render a widget's view instance to the DOM.
 
             // This project's view is quite simple: just a single <canvas> element.
-            // http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
-            this.setElement('<canvas />');
+            // if (this.model.get('canvas_id') == undefined) {
+            //     this.model.set('canvas_id', guid());
+            // }
+            // console.log(this.model.get('_uuid'));
+            this.setElement('<canvas class=' + this.model.get('_uuid') + '/>');
+            // this.setElement('<canvas />');
 
             // Gather some handy references for the canvas and its context.
             this.canvas = this.el
@@ -19,6 +23,7 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
             // Dedicated event handler(s) for special cases, e.g. changes to encoded image data
             // http://backbonejs.org/#Events-on
             this.model.on('change:_encoded', this.update_encoded, this);
+            this.model.on('change:_something', this.something, this);
 
             // Internal image object serving to render new image src data.  This object will
             // later be used as source data argument to the canvas' own `drawImage()` method.
@@ -27,6 +32,9 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
             this.imageWork.onload = function () {
                 that.draw()
             }
+
+            // Ideas for handling keyboard events in the futre.
+            // http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
 
             // Mouse event throttle
             this._mouse_timestamp = 0
@@ -40,6 +48,8 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
             };
 
             // Prevent page from scrolling with mouse wheel events over canvas
+            // http://stackoverflow.com/questions/10313142/
+            //        javascript-capture-mouse-wheel-event-and-do-not-scroll-the-page
             this.canvas.onwheel = function (event) {
                 event.preventDefault();
             };
@@ -54,6 +64,9 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
         },
 
         update: function () {
+            // console.log(IPython);
+            // console.log(IPython.notebook.get_cells());
+
             // Python --> JavaScript (generic)
             // Copy new value from Backbone model, apply to this View.
             // This method handles updates for almost everything except a select few traitlets that
@@ -61,7 +74,7 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
 
             // Currently canvas width and height are slaved (on the Pythn side) to image's
             // inherent width and height.  Later this might be upgraded to support canvas' builtin
-            // affine transform support.
+            // affine transform functions.
 
             // Awesome article about resizing canvas and/or displayed element
             // http://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
@@ -120,14 +133,39 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
                 this.imageWork.src = 'data:image/' + this.model.get('_format') + ';base64,' + value
 
                 // Event processing and image decoding continues inside imageWork's onload() event
-                // handler, which in turn calls this.draw(), which is defined just below..
+                // handler, which in turn calls this.draw() defined just below.
             }
+        },
+
+        something: function() {
+            conesole.log('something')
+            http://stackoverflow.com/questions/5694986/how-can-i-clone-an-image-in-javascript
+http://www.w3schools.com/jsref/met_node_clonenode.asp
+http://stackoverflow.com/questions/8467121/can-i-copy-a-javascript-image-object
+            var imageFinal = this.imageWork.cloneNode()
+
+            var width = this.model.get('width');
+            var height = this.model.get('height');
+
+            var dataURL = this.canvas.toDataURL();
+
+http://stackoverflow.com/questions/7802744/adding-an-img-element-to-a-div-with-javascript
+            this.appropriate_cell_area['text/html'] = '<img src="' + dataURL + '" width="' + width + '">';
+
+
+
+var dataURL = fig.canvas.toDataURL();
+    // Re-enable the keyboard manager in IPython - without this line, in FF,
+    // the notebook keyboard shortcuts fail.
+    IPython.keyboard_manager.enable()
+    $(fig.parent_element).html('<img src="' + dataURL + '" width="' + width + '">');
+
         },
 
         remove: function () {
             // Widget is about to be removed from the front end display.
-            // console.log('remove!');
-            // This is a potential place where I could add functionality to replace canvas with a
+
+            // This is a place where I could potentially add functionality to replace canvas with a
             // static image. See matplotlib's nbagg for ideas:
             // https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/backends/web_backend/nbagg_mpl.js
             CanvasImageView.__super__.remove.apply(this, arguments);
@@ -174,8 +212,8 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
             // mouseover:  'XXX',
         },
 
-        _build_mouse_event: function (jev) {
-            // Build event data structure to be passed along to Python backend
+        build_mouse_event: function (jev) {
+            // Build event data structure to be sent to Python backend
 
             // Mouse button events
             // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
@@ -185,8 +223,7 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
             // https://developer.mozilla.org/en-US/docs/Web/API/Element.getBoundingClientRect
             var rect = this.canvas.getBoundingClientRect();
 
-            // Convert event types to more practical values for use downstream with user's Python
-            // callback functions.
+            // Convert event types to more practical values for user's Python callback functions.
             var js_to_py = {
                 'mousemove': 'move',
                 'mouseup': 'up',
@@ -219,7 +256,7 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
             return ev
         },
 
-        _check_mouse_throttle: function (jev) {
+        check_mouse_throttle: function (jev) {
             // Return true if enough time has passed
             var delta = jev.originalEvent.timeStamp - this._mouse_timestamp
             if (delta >= this._mouse_time_threshold) {
@@ -233,9 +270,8 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
         handle_mouse_generic: function (jev) {
             // Generic mouse event handler
             // https://developer.mozilla.org/en-US/docs/Web/Reference/Events
-
             if (this.model.get('_mouse_active')) {
-                var ev = this._build_mouse_event(jev);
+                var ev = this.build_mouse_event(jev);
                 this.model.set('_mouse_event', ev);
                 this.touch(); // Must call after any modifications to Backbone Model data.
             }
@@ -244,10 +280,10 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
         handle_mouse_move: function (jev) {
             // Mouse motion event handler
             if (this.model.get('_mouse_active')) {
-                if (this._check_mouse_throttle(jev)) {
+                if (this.check_mouse_throttle(jev)) {
                     // This event appears to generate a lot of CPU usage.  Throttling is my
-                    // attempt to mitigate the issue.
-                    var ev = this._build_mouse_event(jev);
+                    // simple attempt to mitigate the issue.
+                    var ev = this.build_mouse_event(jev);
                     this.model.set('_mouse_event', ev);
                     this.touch(); // Must call after any modifications to Backbone Model data.
                 }
@@ -258,7 +294,7 @@ require(["widgets/js/widget", "widgets/js/manager"], function(widget, manager){
     // Simple way to load JS stuff.
     manager.WidgetManager.register_widget_view('CanvasImageView', CanvasImageView);
 
-    // // Official way to load/register JS stuff.
+    // // Official and complicated way to load/register JS stuff.
     // return {
     //     CanvasImageView: CanvasImageView,
     // };

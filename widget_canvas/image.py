@@ -138,31 +138,7 @@ def setup_data(data, force_copy=True):
     return data
 
 
-# def _compress_imageio(data, fmt='jpg', **kwargs):
-#     """
-#     OBSOLETE.
-
-#     Convert input image data array into a compressed data representation.
-
-#     Valid data shapes:
-#         (rows, columns)    - Greyscale
-#         (rows, columns, 1) - Greyscale
-#         (rows, columns, 3) - RGB
-#         (rows, columns, 4) - RGBA
-
-#     fmt: 'png', 'jpeg', etc.
-
-#     Alpha channel will be ignored if fmt == 'jpeg'.
-
-#     Returns a string of compressed data.
-#     """
-#     # Very easy to compress to a buffer via imageio.
-#     data_comp = imageio.imwrite(imageio.RETURN_BYTES, data, format=fmt, **kwargs)
-
-#     return data_comp
-
-
-def compress(data, fmt, **kwargs):
+def encode(data, fmt, **kwargs):
     """
     Helper function to compress image.
 
@@ -199,14 +175,7 @@ def compress(data, fmt, **kwargs):
     return data_comp
 
 
-# def _decompress_imageio(data_comp):
-#     """
-#     OBSOLETE.  Decompress image from supplied byte data.
-#     """
-#     return imageio.imread(data_comp)
-
-
-def decompress(data_comp):
+def decode(data_comp):
     """
     Decompress image from supplied byte data.
     """
@@ -218,16 +187,8 @@ def decompress(data_comp):
     return data
 
 
-def encode(data_comp):
-    """
-    Apply base64 text encoding to already-compressed image byte data.
-    """
-    data_encode = base64.b64encode(data_comp)
 
-    return data_encode
-
-
-def data_url(data_encode, fmt):
+def data_url(data_comp, fmt):
     """
     Assemble into URL data string.
     """
@@ -237,9 +198,13 @@ def data_url(data_encode, fmt):
     encoding = 'utf-8'
     template = 'data:image/{:s};charset={};base64,{:s}'
 
-    result = template.format(fmt, encoding, data_encode.decode(encoding=encoding))
+    # Base64 binary-to-string encoding
+    data_encode = base64.b64encode(data_comp)
 
-    return result
+    # Build the data url
+    url = template.format(fmt, encoding, data_encode.decode(encoding=encoding))
+
+    return url
 
 #################################################
 
