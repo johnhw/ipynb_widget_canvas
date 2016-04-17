@@ -42,20 +42,20 @@ class CanvasImage(widgets.widget.DOMWidget):
     _view_name = traitlets.Unicode('CanvasImageView', sync=True)
 
     # Encoded image data and metadata
-    _encoded = traitlets.Bytes(help='Encoded image data', sync=True)
-    _format = traitlets.Unicode(help='Image encoding format', sync=True)
+    _encoded_url = traitlets.Bytes(help='Encoded image data', sync=True)
+    # _format = traitlets.Unicode(help='Image encoding format', sync=True)
 
     # HTML/DOM/CSS screen display width and height
-    height = traitlets.CInt(help='image screen display height', sync=True)
-    width = traitlets.CInt(help='image screen display width', sync=True)
+    height = traitlets.CInt(help='image display height', sync=True)
+    width = traitlets.CInt(help='image display width', sync=True)
+
+    # Canvas width and height, slaved to image data width and height.
+    _width_canvas = traitlets.CInt(help='data width', sync=True)
+    _height_canvas = traitlets.CInt(help='data height', sync=True)
 
     # Image rendering quality. https://developer.mozilla.org/en/docs/Web/CSS/image-rendering
     pixelated = traitlets.Bool(False, help='Render images via nearest neighbor sampling',
                                sync=True)
-
-    # Canvas width and height, slaved to image data width and height.
-    width_canvas = traitlets.CInt(help='image data width', sync=True)
-    height_canvas = traitlets.CInt(help='image data height', sync=True)
 
     # Mouse event information.
     _mouse_active = traitlets.Bool(False, help='Indicate if mouse events are active', sync=True)
@@ -100,7 +100,7 @@ class CanvasImage(widgets.widget.DOMWidget):
             self._mouse_event_dispatchers[kind] = widgets.widget.CallbackDispatcher()
 
         # Store init data in traitlet(s)
-        self.format = format
+        self._format = format
         self.quality = quality
 
         if url:
@@ -111,9 +111,17 @@ class CanvasImage(widgets.widget.DOMWidget):
         # Set image data
         self.data = data
 
+    def setup_static(self):
+        self.static_image = IPython.display.Image(url=self._encoded_url, embed=True)
+
+
     def close(self):
         print('close!!')
         super().close()
+
+    def something(self):
+        """Testing and debugging."""
+        self._something = not self._something
 
     @property
     def data(self):
@@ -132,40 +140,55 @@ class CanvasImage(widgets.widget.DOMWidget):
                 # Compress input image data and encode via Base64
                 self._data = image.setup_data(data)
 
-                data_comp = image.encode(self._data, fmt=self.format)
-                data_encode = base64.b64encode(data_comp)
+                self._data_comp = image.encode(self._data, fmt=self._format)
+                data_encoded_url = image.data_url(self._data_comp, self._format)
             else:
                 # Clobber image data
                 self._data = None
+                self._data_comp = None
                 HxW = 0, 0
-                # data_comp = None
-                data_encode = b''
+                data_encoded_url = b''
 
             # Update traitlets
-            self._encoded = data_encode
+            self._encoded_url = data_encoded_url.encode()
             self.height, self.width = HxW
-            self.height_canvas, self.width_canvas = HxW
+            self._height_canvas, self._width_canvas = HxW
 
-    @property
-    def format(self):
+    # @property
+    # def format(self):
+    #     """
+    #     Image compression/encoding format, e.g. 'jpg', 'png', 'webp', etc.
+    #     """
+    #     return self._format
+    # @format.setter
+    # def format(self, value):
+    #     valid_formats = ['png', 'jpg', 'jpeg', 'webp']
+    #     if value.lower() not in valid_formats:
+    #         raise ValueError('Invalid encoding format: {}'.format(value))
+    #     self._format = value.lower()
+
+    def inject_static_empty(self):
         """
-        Image compression/encoding format, e.g. 'jpg', 'png', 'webp', etc.
+        Inject place holder image to allow future placement of static image prior to closing widgt.
         """
-        return self._format
+        # template = '<img class="{}" style="display: none">'
+        template = '<img class="{}">'
+        c = 'static_image_' + self._uuid
+        html = template.format(c)
 
-    @format.setter
-    def format(self, value):
-        valid_formats = ['png', 'jpg', 'jpeg', 'webp']
-        if value.lower() not in valid_formats:
-            raise ValueError('Invalid encoding format: {}'.format(value))
+        IPython.display.display_html(html, raw=True)
 
-        self._format = value.lower()
-
-    def display(self):
+    def _ipython_display_(self):
         """
         Display image to Notebook using IPython's rich-display infrastructure.
         """
-        IPython.display.display(self)
+        super(CanvasImage, self)._ipython_display_()
+
+        # self.inject_static_empty()
+
+
+
+
 
     #####################################################
     # Respond to mouse events by calling registered Python event handlers

@@ -41,16 +41,15 @@ from remote URLs.
 
 # Test it on Binder
 
-
 [![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/Who8MyLunch/ipynb_widget_canvas)
 
 
-# Example Widget Usage
+# Example Usage
 
 ![image](example.png)
 
 
-# Mouse event handling
+# Mouse Event Handling
 
 A user-defined mouse event handler will receive two items: the widget insance and a `dict`
 containing event information.  The information describes the state of the mouse (x,y position,

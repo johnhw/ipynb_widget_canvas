@@ -138,9 +138,9 @@ def setup_data(data, force_copy=True):
     return data
 
 
-def encode(data, fmt, **kwargs):
+def encode(data, fmt='png', **kwargs):
     """
-    Helper function to compress image.
+    Compress image data contained in Numpy array. and return string of compressed bytes.
 
     Valid data shapes:
         (rows, columns)    - Greyscale
@@ -148,11 +148,9 @@ def encode(data, fmt, **kwargs):
         (rows, columns, 3) - RGB
         (rows, columns, 4) - RGBA
 
-    fmt: 'png', 'jpeg', etc.
+    fmt: 'png', 'jpg', etc.
 
-    Alpha channel will be ignored if fmt == 'jpeg'.
-
-    Returns a string of compressed data.
+    Alpha channel is ignored for JPEG image format.
 
     Parameter options: http://pillow.readthedocs.org/handbook/image-file-formats.html
     """
@@ -164,7 +162,7 @@ def encode(data, fmt, **kwargs):
 
     if fmt == 'jpeg':
         if data.shape[2] == 4:
-            # Discard alpha channel for JPRG compression.
+            # Discard alpha channel for JPG compression.
             data = data[:, :, :2]
 
     buff = io.BytesIO()
@@ -177,7 +175,7 @@ def encode(data, fmt, **kwargs):
 
 def decode(data_comp):
     """
-    Decompress image from supplied byte data.
+    Decompress image from byte or string sequence of compressed image data.
     """
     buff = io.BytesIO(data_comp)
     img = PIL.Image.open(buff)
@@ -185,7 +183,6 @@ def decode(data_comp):
     data = np.asarray(img)
 
     return data
-
 
 
 def data_url(data_comp, fmt):
